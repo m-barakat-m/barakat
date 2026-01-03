@@ -134,7 +134,7 @@
         </div>
     </div>
 
-    <!-- ✅ ✅ ✅ ✅ ✅ روابط Firebase الصحيحة ✅ ✅ ✅ ✅ ✅ -->
+    <!-- ✅ ✅ ✅ روابط Firebase الصحيحة -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -142,35 +142,10 @@
     <script src="firebase-config.js"></script>
     <script src="dashboard.js"></script>
     
+    <!-- ✅ كود اختبار فقط بدون تهيئة -->
     <script>
-        // تحميل فوري عند فتح الصفحة
-        console.log("🔧 بدء تحميل Firebase...");
-        
-        // اختبار مباشر
-        if (typeof firebase !== 'undefined') {
-            console.log("✅ Firebase محمل بنجاح!");
-            console.log("الإصدار:", firebase.SDK_VERSION);
-            
-            // تهيئة التطبيق
-            try {
-                firebase.initializeApp(firebaseConfig);
-                console.log("✅ Firebase App مهيأ");
-                
-                // اختبار الاتصال
-                firebase.firestore().collection("users").limit(1).get()
-                    .then(snap => {
-                        console.log("✅ Firestore متصل، عدد المستخدمين:", snap.size);
-                    })
-                    .catch(err => {
-                        console.log("⚠️ خطأ Firestore:", err.message);
-                    });
-                    
-            } catch (error) {
-                console.log("❌ خطأ في التهيئة:", error.message);
-            }
-        } else {
-            console.log("❌ Firebase غير محمل! تحقق من الروابط");
-        }
+        console.log("🔍 صفحة لوحة التحكم محملة");
+        console.log("Firebase محمل؟", typeof firebase !== 'undefined' ? '✅' : '❌');
     </script>
 </body>
 </html>
