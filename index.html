@@ -3,222 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم المستخدمين - تطبيقي</title>
+    <title>تسجيل الدخول - لوحة التحكم</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <!-- شريط التنقل -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <i class="fas fa-users"></i>
-                <span>لوحة تحكم المستخدمين</span>
-            </div>
-            <div class="nav-controls">
-                <button class="theme-toggle" id="themeToggle">
-                    <i class="fas fa-moon"></i>
-                    <span>الوضع الداكن</span>
-                </button>
-                <button class="logout-btn" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>تسجيل الخروج</span>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- لوحة التحكم الرئيسية -->
-    <div class="container">
-        <!-- رأس الصفحة -->
-        <header class="dashboard-header">
-            <div class="header-content">
-                <h1><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h1>
-                <p>عرض وإدارة بيانات مستخدمي التطبيق</p>
-            </div>
-            <div class="header-stats">
-                <div class="stat-card">
-                    <div class="stat-icon success">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number" id="totalUsers">0</span>
-                        <span class="stat-label">إجمالي المستخدمين</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon primary">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number" id="activeUsers">0</span>
-                        <span class="stat-label">مستخدمين نشطين</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon warning">
-                        <i class="fas fa-user-clock"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number" id="recentUsers">0</span>
-                        <span class="stat-label">مستخدمين جدد</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- قسم البحث والتصفية -->
-        <div class="filters-section">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="ابحث عن مستخدم...">
-            </div>
-            <div class="filter-controls">
-                <select id="sortSelect">
-                    <option value="newest">الأحدث أولاً</option>
-                    <option value="oldest">الأقدم أولاً</option>
-                    <option value="name">حسب الاسم</option>
-                </select>
-                <button class="filter-btn" id="filterBtn">
-                    <i class="fas fa-filter"></i>
-                    <span>تصفية</span>
-                </button>
-                <button class="refresh-btn" id="refreshBtn">
-                    <i class="fas fa-redo"></i>
-                    <span>تحديث</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- جدول المستخدمين -->
-        <div class="users-section">
-            <div class="section-header">
-                <h2><i class="fas fa-user-friends"></i> قائمة المستخدمين</h2>
-                <div class="section-actions">
-                    <button class="export-btn">
-                        <i class="fas fa-download"></i>
-                        <span>تصدير البيانات</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="table-container">
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-user"></i> المستخدم</th>
-                            <th><i class="fas fa-envelope"></i> البريد الإلكتروني</th>
-                            <th><i class="fas fa-calendar"></i> تاريخ التسجيل</th>
-                            <th><i class="fas fa-signal"></i> الحالة</th>
-                            <th><i class="fas fa-cogs"></i> الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody">
-                        <!-- سيتم ملء هذا القسم بالبيانات من Firebase -->
-                        <tr class="loading-row">
-                            <td colspan="5">
-                                <div class="loading-spinner">
-                                    <div class="spinner"></div>
-                                    <span>جاري تحميل بيانات المستخدمين...</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- تذييل الجدول -->
-            <div class="table-footer">
-                <div class="pagination-info">
-                    <span>عرض <span id="currentCount">0</span> من <span id="totalCount">0</span> مستخدم</span>
-                </div>
-                <div class="pagination-controls">
-                    <button class="pagination-btn" id="prevBtn">
-                        <i class="fas fa-chevron-right"></i>
-                        السابق
-                    </button>
-                    <div class="page-numbers">
-                        <span id="currentPage">1</span> / <span id="totalPages">1</span>
-                    </div>
-                    <button class="pagination-btn" id="nextBtn">
-                        التالي
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم تفاصيل المستخدم -->
-        <div class="details-section" id="userDetailsSection">
-            <div class="section-header">
-                <h2><i class="fas fa-user-circle"></i> تفاصيل المستخدم</h2>
-                <button class="close-details" id="closeDetailsBtn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="user-details" id="userDetailsContent">
-                <p class="select-user-message">اختر مستخدمًا لعرض التفاصيل</p>
-            </div>
-        </div>
-
-        <!-- رسائل النظام -->
-        <div id="messageContainer"></div>
-    </div>
-
-    <!-- نافذة تسجيل الدخول -->
-    <div class="login-modal" id="loginModal">
-        <div class="login-container">
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
             <div class="login-header">
-                <div class="login-icon">
-                    <i class="fas fa-lock"></i>
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Money Manager</span>
                 </div>
-                <h2>تسجيل الدخول</h2>
-                <p>أدخل بيانات الدخول لعرض بيانات المستخدمين</p>
+                <h1>تسجيل دخول الموظفين</h1>
+                <p>أدخل بيانات الدخول للوصول إلى لوحة التحكم</p>
             </div>
+
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="loginEmail">
-                        <i class="fas fa-envelope"></i> البريد الإلكتروني
+                    <label for="email">
+                        <i class="fas fa-envelope"></i>
+                        البريد الإلكتروني
                     </label>
-                    <input type="email" id="loginEmail" placeholder="example@email.com" required>
+                    <input type="email" id="email" required 
+                           placeholder="employee@example.com">
                 </div>
+
                 <div class="form-group">
-                    <label for="loginPassword">
-                        <i class="fas fa-key"></i> كلمة المرور
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        كلمة المرور
                     </label>
-                    <input type="password" id="loginPassword" placeholder="أدخل كلمة المرور" required>
+                    <input type="password" id="password" required 
+                           placeholder="أدخل كلمة المرور">
                 </div>
-                <button type="submit" class="login-submit-btn">
+
+                <button type="submit" class="btn btn-primary btn-block">
                     <i class="fas fa-sign-in-alt"></i>
                     تسجيل الدخول
                 </button>
+
+                <div class="login-footer">
+                    <p class="error-message" id="errorMessage"></p>
+                    <p>للموظفين المسجلين فقط</p>
+                </div>
             </form>
-            <div class="login-footer">
-                <p>يجب أن تكون لديك صلاحية الدخول لعرض هذه البيانات</p>
-            </div>
         </div>
     </div>
 
-    <!-- نافذة المستخدم التفصيلية -->
-    <div class="user-modal" id="userModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalUserName">تفاصيل المستخدم</h3>
-                <button class="modal-close" id="modalCloseBtn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- سيتم ملؤه بالبيانات -->
-            </div>
-        </div>
-    </div>
-
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js"></script>
+    
+    <!-- ملفات النظام -->
     <script src="firebase-config.js"></script>
-    <script src="script.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = new AuthSystem();
+
+        // معالجة تسجيل الدخول
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            const result = await auth.login(email, password);
+            
+            if (result.success) {
+                window.location.href = 'dashboard.html';
+            } else {
+                errorMessage.textContent = result.error;
+            }
+        });
+
+        // التحقق من حالة تسجيل الدخول
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = 'dashboard.html';
+            }
+        });
+    </script>
 </body>
 </html>
