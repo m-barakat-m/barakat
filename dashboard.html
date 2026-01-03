@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-chart-line"></i>
+                <span>لوحة التحكم</span>
+                <span class="user-role" id="userRole"></span>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="userName"></span>
+                </div>
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    تسجيل الخروج
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="container">
+        <!-- الإحصائيات -->
+        <div class="stats-grid" id="statsSection">
+            <!-- سيتم ملؤها بالبيانات -->
+        </div>
+
+        <!-- أدوات التحكم -->
+        <div class="control-panel">
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" 
+                           placeholder="ابحث عن مستخدم بالاسم، البريد أو الهاتف">
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="addUserBtn" style="display: none;">
+                        <i class="fas fa-plus"></i>
+                        إضافة مستخدم
+                    </button>
+                    <button class="btn btn-secondary" id="refreshBtn">
+                        <i class="fas fa-redo"></i>
+                        تحديث
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول المستخدمين -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الاسم</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>رقم الهاتف</th>
+                        <th>الحالة</th>
+                        <th>الباقة</th>
+                        <th>تاريخ التسجيل</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable">
+                    <!-- سيتم ملؤها بالبيانات -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- رسالة التحميل -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>جاري تحميل البيانات...</p>
+        </div>
+
+        <!-- رسالة عدم وجود بيانات -->
+        <div class="no-data" id="noData" style="display: none;">
+            <i class="fas fa-users-slash"></i>
+            <p>لا توجد بيانات للعرض</p>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل مستخدم -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">إضافة مستخدم جديد</h3>
+                <button class="close-modal" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                
+                <div class="form-group">
+                    <label for="userNameInput">الاسم الكامل</label>
+                    <input type="text" id="userNameInput" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userEmail">البريد الإلكتروني</label>
+                    <input type="email" id="userEmail" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userPhone">رقم الهاتف</label>
+                    <input type="tel" id="userPhone" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userStatus">الحالة</label>
+                        <select id="userStatus">
+                            <option value="active">نشط</option>
+                            <option value="inactive">غير نشط</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userPlan">الباقة</label>
+                        <select id="userPlan">
+                            <option value="Basic">Basic</option>
+                            <option value="Premium">Premium</option>
+                            <option value="Pro">Pro</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة التأكيد -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تأكيد العملية</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">هل أنت متأكد من الحذف؟</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelConfirm">إلغاء</button>
+                <button class="btn btn-danger" id="confirmAction">تأكيد</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ملفات JavaScript -->
+    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js"></script>
+    
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="firestore.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
