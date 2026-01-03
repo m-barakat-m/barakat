@@ -46,6 +46,12 @@
                 <div class="login-footer">
                     <p class="error-message" id="errorMessage"></p>
                     <p>للموظفين المسجلين فقط</p>
+                    
+                    <!-- زر المساعدة السريعة -->
+                    <button type="button" class="btn-help" id="quickHelpBtn" 
+                            style="margin-top: 15px; background: #f8f9fa; border: 1px solid #ddd; padding: 8px 15px; border-radius: 5px; cursor: pointer; width: 100%;">
+                        <i class="fas fa-magic"></i> مساعدة سريعة: إنشاء مدير تجريبي
+                    </button>
                 </div>
             </form>
         </div>
@@ -87,6 +93,99 @@
                 window.location.href = 'dashboard.html';
             }
         });
+
+        // زر المساعدة السريعة - إنشاء مدير تجريبي
+        document.getElementById('quickHelpBtn').addEventListener('click', async function() {
+            const email = 'admin@moneymanager.com';
+            const password = 'Admin@1234';
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // تغيير نص الزر أثناء التنفيذ
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+            this.disabled = true;
+            
+            try {
+                errorMessage.textContent = 'جاري إنشاء حساب المدير...';
+                
+                // 1. إنشاء حساب في Authentication
+                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                const uid = userCredential.user.uid;
+                
+                errorMessage.textContent = 'تم إنشاء الحساب، جاري إضافة البيانات...';
+                
+                // 2. إضافة بيانات الموظف في Firestore بنفس الـ UID
+                await firebase.firestore().collection('employees').doc(uid).set({
+                    name: 'المدير الرئيسي',
+                    email: email,
+                    phone: '+966501234567',
+                    role: 'مدير',
+                    status: 'active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                errorMessage.textContent = '✅ تم! يتم تسجيل الدخول تلقائياً...';
+                
+                // 3. ملء الحقول تلقائياً
+                document.getElementById('email').value = email;
+                document.getElementById('password').value = password;
+                
+                // 4. تسجيل الدخول تلقائياً بعد 2 ثانية
+                setTimeout(async () => {
+                    try {
+                        const result = await auth.login(email, password);
+                        if (result.success) {
+                            window.location.href = 'dashboard.html';
+                        } else {
+                            errorMessage.textContent = 'خطأ في التسجيل التلقائي: ' + result.error;
+                        }
+                    } catch (loginError) {
+                        errorMessage.textContent = 'تسجيل الدخول يدوياً بـ: ' + email + ' / ' + password;
+                    }
+                    
+                    // إعادة الزر لحالته الأصلية
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                // إذا كان الحساب موجوداً بالفعل
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage.textContent = '✅ الحساب موجود بالفعل. سجل دخول بـ: ' + email + ' / ' + password;
+                    document.getElementById('email').value = email;
+                    document.getElementById('password').value = password;
+                } else {
+                    errorMessage.textContent = 'خطأ: ' + error.message;
+                }
+                
+                // إعادة الزر لحالته الأصلية
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+
+        // زر اختباري إضافي في الكونسول
+        console.log('%c🎮 أدوات المطور متاحة!', 'color: #018159; font-size: 14px; font-weight: bold;');
+        console.log('%cلإنشاء مدير سريعاً، افتح Console (F12) والصق:', 'color: #666;');
+        console.log(`
+// كود إنشاء مدير سريع
+async function createAdmin() {
+  try {
+    const user = await firebase.auth().createUserWithEmailAndPassword("admin@test.com", "Test@1234");
+    await firebase.firestore().collection("employees").doc(user.user.uid).set({
+      name: "المدير",
+      email: "admin@test.com",
+      role: "مدير",
+      phone: "0500000000",
+      status: "active"
+    });
+    console.log("✅ تم! سجل دخول بـ admin@test.com / Test@1234");
+  } catch(e) {
+    console.log("الحساب موجود، سجل دخول مباشرة");
+  }
+}
+createAdmin();
+        `);
     </script>
 </body>
 </html>
