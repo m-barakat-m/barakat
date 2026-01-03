@@ -1,13 +1,25 @@
 // إدارة بيانات Firestore
 class FirestoreManager {
     constructor() {
-        this.db = firebase.firestore();
+        // ✅ تأكد أن firebase محمل
+        if (typeof firebase === 'undefined') {
+            console.error('Firebase غير محمل! تأكد من الروابط');
+            return;
+        }
+        
+        // ✅ الإصدار 8.x.x يستخدم firebase.firestore()
+        // ✅ الإصدار 9.x.x يستخدم firebase.firestore
+        this.db = firebase.firestore ? firebase.firestore() : firebase.firestore;
+        
+        if (!this.db) {
+            console.error('فشل تحميل Firestore');
+        }
     }
 
     // جلب جميع مستخدمي التطبيق
     async getAppUsers() {
         try {
-            const snapshot = await this.db.collection('appUsers').get();
+            const snapshot = await this.db.collection('users').get();
             return snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -38,7 +50,7 @@ class FirestoreManager {
             userData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             userData.status = userData.status || 'active';
             
-            const docRef = await this.db.collection('appUsers').add(userData);
+            const docRef = await this.db.collection('users').add(userData);
             return { success: true, id: docRef.id };
         } catch (error) {
             return { success: false, error: error.message };
@@ -48,7 +60,7 @@ class FirestoreManager {
     // تحديث مستخدم
     async updateAppUser(userId, userData) {
         try {
-            await this.db.collection('appUsers').doc(userId).update(userData);
+            await this.db.collection('users').doc(userId).update(userData);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -58,7 +70,7 @@ class FirestoreManager {
     // حذف مستخدم
     async deleteAppUser(userId) {
         try {
-            await this.db.collection('appUsers').doc(userId).delete();
+            await this.db.collection('users').doc(userId).delete();
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -68,34 +80,16 @@ class FirestoreManager {
     // البحث في المستخدمين
     async searchUsers(searchTerm) {
         try {
-            let query = this.db.collection('appUsers');
+            if (!searchTerm.trim()) {
+                return await this.getAppUsers();
+            }
             
-            // البحث في الاسم
-            const nameQuery = await query
-                .where('name', '>=', searchTerm)
-                .where('name', '<=', searchTerm + '\uf8ff')
-                .get();
-
-            // البحث في البريد
-            const emailQuery = await query
-                .where('email', '>=', searchTerm)
-                .where('email', '<=', searchTerm + '\uf8ff')
-                .get();
-
-            // البحث في الهاتف
-            const phoneQuery = await query
-                .where('phone', '>=', searchTerm)
-                .where('phone', '<=', searchTerm + '\uf8ff')
-                .get();
-
-            // دمج النتائج
-            const results = new Map();
-            
-            [...nameQuery.docs, ...emailQuery.docs, ...phoneQuery.docs].forEach(doc => {
-                results.set(doc.id, { id: doc.id, ...doc.data() });
-            });
-
-            return Array.from(results.values());
+            const users = await this.getAppUsers();
+            return users.filter(user => 
+                (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (user.phone && user.phone.includes(searchTerm))
+            );
         } catch (error) {
             console.error('Search error:', error);
             return [];
