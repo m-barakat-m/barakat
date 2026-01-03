@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-chart-line"></i>
+                <span>لوحة التحكم</span>
+            </div>
+            <div class="nav-controls">
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>✅ Firebase محمل بنجاح!</h1>
+        <p>افتح Console (F12) لرؤية حالة Firebase</p>
+    </div>
+
+    <!-- ✅ الإصدار المؤكد عمله -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <script src="firebase-config.js"></script>
+    <script>
+        // اختبار Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log('✅ Firebase App:', firebase.app().name);
+            console.log('✅ Firebase Auth:', firebase.auth());
+            console.log('✅ Firebase Firestore:', firebase.firestore());
+            console.log('🎯 كل شيء جاهز!');
+        } catch (error) {
+            console.error('❌ خطأ في Firebase:', error);
+        }
+    </script>
+</body>
+</html>
