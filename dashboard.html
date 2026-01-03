@@ -14,13 +14,13 @@
             <div class="nav-brand">
                 <i class="fas fa-chart-line"></i>
                 <span>لوحة التحكم</span>
-                <span class="user-role" id="userRole"></span>
+                <span class="user-role" id="userRole">جاري التحميل...</span>
             </div>
             
             <div class="nav-controls">
                 <div class="user-info">
                     <i class="fas fa-user"></i>
-                    <span id="userName"></span>
+                    <span id="userName">جاري التحميل...</span>
                 </div>
                 <button class="btn btn-danger" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i>
@@ -34,7 +34,45 @@
     <div class="container">
         <!-- الإحصائيات -->
         <div class="stats-grid" id="statsSection">
-            <!-- سيتم ملؤها بالبيانات -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon users">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">إجمالي المستخدمين</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon active">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="activeUsers">0</div>
+                <div class="stat-label">مستخدمين نشطين</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon inactive">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="inactiveUsers">0</div>
+                <div class="stat-label">مستخدمين غير نشطين</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon revenue">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="premiumUsers">0</div>
+                <div class="stat-label">مستخدمين Premium</div>
+            </div>
         </div>
 
         <!-- أدوات التحكم -->
@@ -47,7 +85,7 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <button class="btn btn-primary" id="addUserBtn" style="display: none;">
+                    <button class="btn btn-primary" id="addUserBtn">
                         <i class="fas fa-plus"></i>
                         إضافة مستخدم
                     </button>
@@ -75,102 +113,64 @@
                     </tr>
                 </thead>
                 <tbody id="usersTable">
-                    <!-- سيتم ملؤها بالبيانات -->
+                    <!-- رسالة التحميل -->
+                    <tr id="loadingRow">
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <div class="loading-message">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>جاري تحميل البيانات...</p>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- رسالة التحميل -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>جاري تحميل البيانات...</p>
-        </div>
-
-        <!-- رسالة عدم وجود بيانات -->
-        <div class="no-data" id="noData" style="display: none;">
-            <i class="fas fa-users-slash"></i>
-            <p>لا توجد بيانات للعرض</p>
+        <!-- زر إضافة بيانات تجريبية -->
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn btn-warning" id="addSampleDataBtn" style="display: none;">
+                <i class="fas fa-magic"></i> إضافة بيانات تجريبية للاختبار
+            </button>
         </div>
     </div>
 
-    <!-- نافذة إضافة/تعديل مستخدم -->
-    <div class="modal" id="userModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">إضافة مستخدم جديد</h3>
-                <button class="close-modal" id="closeModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="userForm">
-                <input type="hidden" id="userId">
-                
-                <div class="form-group">
-                    <label for="userNameInput">الاسم الكامل</label>
-                    <input type="text" id="userNameInput" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="userEmail">البريد الإلكتروني</label>
-                    <input type="email" id="userEmail" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="userPhone">رقم الهاتف</label>
-                    <input type="tel" id="userPhone" required>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="userStatus">الحالة</label>
-                        <select id="userStatus">
-                            <option value="active">نشط</option>
-                            <option value="inactive">غير نشط</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="userPlan">الباقة</label>
-                        <select id="userPlan">
-                            <option value="Basic">Basic</option>
-                            <option value="Premium">Premium</option>
-                            <option value="Pro">Pro</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="cancelBtn">إلغاء</button>
-                    <button type="submit" class="btn btn-primary">حفظ</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- نافذة التأكيد -->
-    <div class="modal" id="confirmModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>تأكيد العملية</h3>
-            </div>
-            <div class="modal-body">
-                <p id="confirmMessage">هل أنت متأكد من الحذف؟</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancelConfirm">إلغاء</button>
-                <button class="btn btn-danger" id="confirmAction">تأكيد</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ملفات JavaScript -->
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js"></script>
+    <!-- ✅ ✅ ✅ ✅ ✅ روابط Firebase الصحيحة ✅ ✅ ✅ ✅ ✅ -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <script src="firebase-config.js"></script>
-    <script src="auth.js"></script>
-    <script src="firestore.js"></script>
     <script src="dashboard.js"></script>
+    
+    <script>
+        // تحميل فوري عند فتح الصفحة
+        console.log("🔧 بدء تحميل Firebase...");
+        
+        // اختبار مباشر
+        if (typeof firebase !== 'undefined') {
+            console.log("✅ Firebase محمل بنجاح!");
+            console.log("الإصدار:", firebase.SDK_VERSION);
+            
+            // تهيئة التطبيق
+            try {
+                firebase.initializeApp(firebaseConfig);
+                console.log("✅ Firebase App مهيأ");
+                
+                // اختبار الاتصال
+                firebase.firestore().collection("users").limit(1).get()
+                    .then(snap => {
+                        console.log("✅ Firestore متصل، عدد المستخدمين:", snap.size);
+                    })
+                    .catch(err => {
+                        console.log("⚠️ خطأ Firestore:", err.message);
+                    });
+                    
+            } catch (error) {
+                console.log("❌ خطأ في التهيئة:", error.message);
+            }
+        } else {
+            console.log("❌ Firebase غير محمل! تحقق من الروابط");
+        }
+    </script>
 </body>
 </html>
