@@ -1,4 +1,4 @@
-// لوحة التحكم المبسطة
+// لوحة التحكم المبسطة والمعدلة
 class Dashboard {
     constructor() {
         console.log("🚀 بدء لوحة التحكم...");
@@ -11,12 +11,21 @@ class Dashboard {
         }
         
         try {
-            // تهيئة Firebase
-            firebase.initializeApp(firebaseConfig);
+            // 🔧 حل مشكلة duplicate-app
+            let app;
+            try {
+                app = firebase.app(); // تحقق إذا كان مهيأ
+                console.log("✅ Firebase مهيأ مسبقاً باسم:", app.name);
+            } catch (error) {
+                // تهيئة إذا لم يكن مهيأ
+                app = firebase.initializeApp(firebaseConfig);
+                console.log("✅ Firebase مهيأ بنجاح");
+            }
+            
             this.auth = firebase.auth();
             this.db = firebase.firestore();
             
-            console.log("✅ Firebase مهيأ");
+            console.log("🎯 Firebase جاهز للاستخدام");
             
             // إعداد الأحداث
             this.setupEvents();
@@ -25,7 +34,7 @@ class Dashboard {
             this.checkAuth();
             
         } catch (error) {
-            console.error("❌ خطأ في التهيئة:", error);
+            console.error("❌ خطأ في النظام:", error);
             this.showErrorMessage("خطأ في النظام: " + error.message);
         }
     }
@@ -42,9 +51,12 @@ class Dashboard {
         });
         
         // إضافة بيانات تجريبية
-        document.getElementById('addSampleDataBtn').addEventListener('click', () => {
-            this.addSampleData();
-        });
+        const sampleBtn = document.getElementById('addSampleDataBtn');
+        if (sampleBtn) {
+            sampleBtn.addEventListener('click', () => {
+                this.addSampleData();
+            });
+        }
     }
     
     checkAuth() {
@@ -65,10 +77,10 @@ class Dashboard {
             
             if (doc.exists) {
                 const userData = doc.data();
-                document.getElementById('userName').textContent = userData.name || user.email;
+                document.getElementById('userName').textContent = userData.name || userData.email;
                 document.getElementById('userRole').textContent = userData.role || 'مستخدم';
                 
-                console.log("✅ بيانات المستخدم محملة");
+                console.log("✅ بيانات المستخدم محملة:", userData);
                 this.loadData();
             } else {
                 console.error("❌ لا توجد بيانات موظف");
@@ -104,13 +116,15 @@ class Dashboard {
             
             // إظهار زر البيانات التجريبية إذا لم تكن هناك بيانات
             if (users.length === 0) {
-                document.getElementById('addSampleDataBtn').style.display = 'inline-block';
+                const sampleBtn = document.getElementById('addSampleDataBtn');
+                if (sampleBtn) sampleBtn.style.display = 'inline-block';
             }
             
         } catch (error) {
             console.error("❌ خطأ في تحميل البيانات:", error);
             this.displayUsers([]);
-            document.getElementById('addSampleDataBtn').style.display = 'inline-block';
+            const sampleBtn = document.getElementById('addSampleDataBtn');
+            if (sampleBtn) sampleBtn.style.display = 'inline-block';
         }
     }
     
@@ -127,6 +141,10 @@ class Dashboard {
     
     displayUsers(users) {
         const tableBody = document.getElementById('usersTable');
+        if (!tableBody) {
+            console.error("❌ جدول المستخدمين غير موجود!");
+            return;
+        }
         
         // إزالة رسالة التحميل
         const loadingRow = document.getElementById('loadingRow');
@@ -175,7 +193,7 @@ class Dashboard {
                     <td>${user.plan || 'غير محدد'}</td>
                     <td>${dateStr}</td>
                     <td>
-                        <button class="action-btn edit" title="تعديل">
+                        <button class="action-btn edit" title="تعديل" onclick="dashboard.editUser('${user.id}')">
                             <i class="fas fa-edit"></i>
                         </button>
                     </td>
@@ -196,7 +214,7 @@ class Dashboard {
                 phone: "+966501234567",
                 status: "active",
                 plan: "Premium",
-                createdAt: new Date()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             {
                 name: "سارة علي",
@@ -204,7 +222,7 @@ class Dashboard {
                 phone: "+966502345678",
                 status: "active",
                 plan: "Basic",
-                createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             {
                 name: "محمد حسن",
@@ -212,13 +230,14 @@ class Dashboard {
                 phone: "+966503456789",
                 status: "inactive",
                 plan: "Free",
-                createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }
         ];
         
         try {
             for (const user of sampleUsers) {
                 await this.db.collection('users').add(user);
+                console.log("➕ تم إضافة:", user.name);
             }
             
             alert("✅ تم إضافة بيانات تجريبية بنجاح!");
@@ -228,6 +247,11 @@ class Dashboard {
             console.error("❌ خطأ في إضافة البيانات:", error);
             alert("خطأ: " + error.message);
         }
+    }
+    
+    editUser(userId) {
+        console.log("تعديل المستخدم:", userId);
+        alert("ميزة التعديل قيد التطوير. المستخدم: " + userId);
     }
     
     showErrorMessage(message) {
