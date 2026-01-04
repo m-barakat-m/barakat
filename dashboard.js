@@ -1,3 +1,4 @@
+
 // Dashboard Management System - COMPLETE VERSION WITH ALL UPDATES
 class DashboardSystem {
     // في dashboard.js داخل class DashboardSystem
@@ -15,6 +16,7 @@ class DashboardSystem {
         // Show notification
         this.showMessage('Income data updated', 'info');
     }
+    
     constructor() {
         this.user = null;
         this.permissions = {};
@@ -27,6 +29,12 @@ class DashboardSystem {
 
     async init() {
         console.log("🚀 Initializing Dashboard System...");
+        
+        // التحقق من المصادقة أولاً
+        const isAuthenticated = await this.checkAuthBeforeLoad();
+        if (!isAuthenticated) {
+            return; // سيتم التحويل إلى صفحة login
+        }
         
         // Check Firebase
         if (typeof firebase === 'undefined') {
@@ -50,15 +58,46 @@ class DashboardSystem {
             // Setup event listeners
             this.setupEvents();
             
-            // Check authentication
-            this.checkAuth();
-            
             // Initialize charts
             this.initCharts();
             
         } catch (error) {
             console.error("❌ System initialization error:", error);
             this.showError("System error: " + error.message);
+        }
+    }
+    
+    async checkAuthBeforeLoad() {
+        try {
+            console.log("🔐 Checking authentication...");
+            
+            // Wait for authSystem to be ready
+            if (!window.authSystem) {
+                console.log("⚠️ authSystem not ready, checking localStorage...");
+                const user = localStorage.getItem('currentUser');
+                if (!user) {
+                    console.log("❌ No user found in localStorage, redirecting...");
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                return true;
+            }
+            
+            // Check using authSystem
+            const authCheck = await window.authSystem.checkAuth();
+            if (!authCheck.authenticated) {
+                console.log("❌ Not authenticated, redirecting to login...");
+                window.location.href = 'index.html';
+                return false;
+            }
+            
+            console.log("✅ User authenticated");
+            return true;
+            
+        } catch (error) {
+            console.error("Auth check error:", error);
+            window.location.href = 'index.html';
+            return false;
         }
     }
     
@@ -151,18 +190,6 @@ class DashboardSystem {
         }
     }
     
-    async checkAuth() {
-        this.auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                console.log("✅ User authenticated:", user.email);
-                await this.loadUserData(user.uid);
-            } else {
-                console.log("❌ Not authenticated, redirecting...");
-                window.location.href = 'index.html';
-            }
-        });
-    }
-    
     async loadUserData(userId) {
         try {
             const doc = await this.db.collection('employees').doc(userId).get();
@@ -228,6 +255,12 @@ class DashboardSystem {
             if (cachedStats) {
                 this.updateStatsUI(cachedStats);
                 this.showMessage('Loaded cached data', 'info');
+            }
+            
+            // Get current user if not loaded
+            if (!this.user && window.authSystem?.currentUser) {
+                this.user = window.authSystem.currentUser;
+                this.updateUserInterface();
             }
             
             // Load all statistics in parallel
