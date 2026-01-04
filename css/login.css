@@ -1,0 +1,132 @@
+/* Add these styles to the existing style.css file */
+
+/* Logo Section Styles */
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    justify-content: center;
+}
+
+.app-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.app-info h1 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.app-info p {
+    margin: 0.25rem 0 0;
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+/* Login Button Specific */
+.login-btn {
+    margin-top: 1.5rem;
+    padding: 0.875rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Quick Help Button */
+.btn-secondary {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: 1px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+/* Footer Note */
+.footer-note {
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.875rem;
+    margin: 1rem 0;
+}
+
+/* Form Improvements */
+.form-group input {
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #d1d5db;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(1, 129, 89, 0.1);
+    outline: none;
+}
+
+/* Error Message Styling */
+.error-message {
+    background: rgba(245, 101, 101, 0.1);
+    border-left: 4px solid var(--danger-color);
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    border-radius: var(--radius-sm);
+    color: var(--danger-color);
+    font-size: 0.875rem;
+}
+
+/* Responsive Design for Login */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .logo-section {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .app-logo {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .app-info h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Loading Spinner */
+.fa-spinner.fa-spin {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Button Disabled State */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Smooth Transitions */
+.btn, .form-group input, .login-card {
+    transition: all 0.3s ease;
+}
+
+/* Shadow on Hover for Login Card */
+.login-card:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}

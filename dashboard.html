@@ -302,36 +302,122 @@
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h3>Quick Actions</h3>
-                <div class="actions-grid">
-                    <button class="action-card" id="addUserBtn">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Add New User</span>
-                    </button>
-                    <button class="action-card" id="addEmployeeBtn">
-                        <i class="fas fa-user-tie"></i>
-                        <span>Add Employee</span>
-                    </button>
-                    <button class="action-card" id="addIncomeBtn">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <span>Record Income</span>
-                    </button>
-                    <button class="action-card" id="addExpenseBtn">
-                        <i class="fas fa-receipt"></i>
-                        <span>Record Expense</span>
-                    </button>
-                    <button class="action-card" id="generateReportBtn">
-                        <i class="fas fa-chart-pie"></i>
-                        <span>Generate Report</span>
-                    </button>
-                    <button class="action-card" id="systemSettingsBtn">
-                        <i class="fas fa-cogs"></i>
-                        <span>System Settings</span>
-                    </button>
+<div class="quick-actions">
+    <h3>Quick Actions</h3>
+    <div class="actions-grid">
+        <button class="action-card" id="addUserBtn">
+            <i class="fas fa-user-plus"></i>
+            <span>Add New User</span>
+        </button>
+        <button class="action-card" id="addEmployeeBtn">
+            <i class="fas fa-user-tie"></i>
+            <span>Add Employee</span>
+        </button>
+        <button class="action-card" id="addIncomeBtn">
+            <i class="fas fa-money-bill-wave"></i>
+            <span>Record Income</span>
+        </button>
+        <button class="action-card" id="addExpenseBtn">
+            <i class="fas fa-receipt"></i>
+            <span>Record Expense</span>
+        </button>
+        <!-- إضافة الأزرار الجديدة -->
+        <button class="action-card" id="manageBudgetsBtn">
+            <i class="fas fa-chart-pie"></i>
+            <span>Manage Budgets</span>
+        </button>
+        <button class="action-card" id="manageGoalsBtn">
+            <i class="fas fa-bullseye"></i>
+            <span>Manage Goals</span>
+        </button>
+        <button class="action-card" id="viewNotificationsBtn">
+            <i class="fas fa-bell"></i>
+            <span>View Notifications</span>
+            <span class="badge" id="dashboardNotificationCount">0</span>
+        </button>
+        <button class="action-card" id="generateReportBtn">
+            <i class="fas fa-chart-pie"></i>
+            <span>Generate Report</span>
+        </button>
+        <button class="action-card" id="systemSettingsBtn">
+            <i class="fas fa-cogs"></i>
+            <span>System Settings</span>
+        </button>
+    </div>
+</div>
+
+<!-- إضافة قسم Insights بعد Quick Actions -->
+<!-- Smart Insights -->
+<div class="insights-section">
+    <div class="section-header">
+        <h3><i class="fas fa-lightbulb"></i> Smart Insights</h3>
+        <button class="btn btn-secondary" id="refreshInsightsBtn">
+            <i class="fas fa-redo"></i> Refresh
+        </button>
+    </div>
+    
+    <div class="insights-grid" id="insightsGrid">
+        <div class="insight-card">
+            <div class="insight-header">
+                <div class="insight-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <h4>Spending Trend</h4>
+                    <span class="insight-tag positive">+12%</span>
                 </div>
             </div>
+            <div class="insight-content">
+                <p>Your spending increased by 12% compared to last month. Food expenses saw the highest increase.</p>
+            </div>
+            <div class="insight-actions">
+                <button class="btn btn-sm btn-primary" onclick="window.location.href='expenses.html'">
+                    View Details
+                </button>
+            </div>
+        </div>
+
+        <div class="insight-card">
+            <div class="insight-header">
+                <div class="insight-icon">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <div>
+                    <h4>Savings Opportunity</h4>
+                    <span class="insight-tag warning">Potential</span>
+                </div>
+            </div>
+            <div class="insight-content">
+                <p>You could save $150/month by reducing entertainment and dining out expenses by 20%.</p>
+            </div>
+            <div class="insight-actions">
+                <button class="btn btn-sm btn-primary" onclick="window.location.href='budgets.html'">
+                    Set Budget
+                </button>
+            </div>
+        </div>
+
+        <div class="insight-card">
+            <div class="insight-header">
+                <div class="insight-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div>
+                    <h4>Goal Progress</h4>
+                    <span class="insight-tag success">65%</span>
+                </div>
+            </div>
+            <div class="insight-content">
+                <p>You're 65% towards your emergency fund goal. At this rate, you'll reach it in 3 months.</p>
+            </div>
+            <div class="insight-actions">
+                <button class="btn btn-sm btn-primary" onclick="window.location.href='goals.html'">
+                    View Goals
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
         </main>
     </div>
 

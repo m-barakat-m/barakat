@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
+                <div class="brand-text">
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">Financial Reports</span>
+                </div>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-role" id="userRole">Role</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </button>
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="users.html">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="employees.html">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employees</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profiles.html">
+                            <i class="fas fa-id-card"></i>
+                            <span>Profiles</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Financial Data</li>
+                    <li>
+                        <a href="incomes.html">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Incomes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="expenses.html">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Expenses</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Budget & Goals</li>
+                    <li>
+                        <a href="budgets.html">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Budgets</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="goals.html">
+                            <i class="fas fa-bullseye"></i>
+                            <span>Goals</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="notifications.html">
+                            <i class="fas fa-bell"></i>
+                            <span>Notifications</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Categories</li>
+                    <li>
+                        <a href="categories.html">
+                            <i class="fas fa-tags"></i>
+                            <span>Expense Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="income-categories.html">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Income Categories</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Reports</li>
+                    <li class="active">
+                        <a href="reports.html">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="preferences.html">
+                            <i class="fas fa-cog"></i>
+                            <span>Preferences</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>Financial Reports</h1>
+                    <p>Generate and analyze detailed financial reports</p>
+                </div>
+                <button class="btn btn-primary" id="generateReportBtn">
+                    <i class="fas fa-plus-circle"></i>
+                    Generate Report
+                </button>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Reports</h3>
+                        <div class="stat-icon total">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalReports">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-calendar"></i>
+                        <span id="thisMonthReports">0</span> this month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Most Viewed</h3>
+                        <div class="stat-icon popular">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="mostViewedReport">-</div>
+                    <div class="stat-change">
+                        <i class="fas fa-eye"></i>
+                        <span id="viewCount">0</span> views
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Last Generated</h3>
+                        <div class="stat-icon recent">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="lastReportDate">-</div>
+                    <div class="stat-change">
+                        <i class="fas fa-user"></i>
+                        <span id="lastReportBy">-</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Avg. Size</h3>
+                        <div class="stat-icon size">
+                            <i class="fas fa-database"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="avgReportSize">0KB</div>
+                    <div class="stat-change">
+                        <i class="fas fa-file-pdf"></i>
+                        PDF format
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Types -->
+            <div class="section-header">
+                <h3>Report Types</h3>
+                <div class="report-types-filter">
+                    <select id="reportTypeFilter" class="filter-select">
+                        <option value="all">All Types</option>
+                        <option value="monthly">Monthly Summary</option>
+                        <option value="budget">Budget Analysis</option>
+                        <option value="income">Income Report</option>
+                        <option value="expense">Expense Report</option>
+                        <option value="goal">Goal Progress</option>
+                        <option value="custom">Custom Reports</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="reports-grid" id="reportsGrid">
+                <!-- Report cards will be loaded here dynamically -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading reports...</p>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Report Generation Trend</h3>
+                        <select id="chartPeriod" class="chart-select">
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="reportsTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Report Types Distribution</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="reportsTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scheduled Reports -->
+            <div class="scheduled-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-calendar-alt"></i> Scheduled Reports</h3>
+                    <button class="btn btn-primary" id="addScheduleBtn">
+                        <i class="fas fa-plus"></i>
+                        Add Schedule
+                    </button>
+                </div>
+                <div class="scheduled-list" id="scheduledList">
+                    <div class="scheduled-item">
+                        <div class="scheduled-info">
+                            <h4>Monthly Financial Summary</h4>
+                            <p>Generates on the 1st of every month</p>
+                            <small>Next: <span id="nextMonthlyReport">-</span></small>
+                        </div>
+                        <div class="scheduled-actions">
+                            <button class="btn btn-sm btn-secondary">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Options -->
+            <div class="export-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-download"></i> Export Options</h3>
+                </div>
+                <div class="export-options">
+                    <button class="export-option" data-format="pdf">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>PDF</span>
+                        <small>Best for printing</small>
+                    </button>
+                    <button class="export-option" data-format="excel">
+                        <i class="fas fa-file-excel"></i>
+                        <span>Excel</span>
+                        <small>For data analysis</small>
+                    </button>
+                    <button class="export-option" data-format="csv">
+                        <i class="fas fa-file-csv"></i>
+                        <span>CSV</span>
+                        <small>For data import</small>
+                    </button>
+                    <button class="export-option" data-format="json">
+                        <i class="fas fa-file-code"></i>
+                        <span>JSON</span>
+                        <small>For developers</small>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Generate Report Modal -->
+    <div class="modal" id="generateReportModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Generate New Report</h3>
+                <button class="close-modal" id="closeGenerateReportModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="generateReportForm">
+                    <div class="form-group">
+                        <label for="reportName">
+                            <i class="fas fa-file-alt"></i>
+                            Report Name *
+                        </label>
+                        <input type="text" id="reportName" placeholder="e.g., Monthly Financial Report - January 2024" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reportType">
+                                <i class="fas fa-tag"></i>
+                                Report Type *
+                            </label>
+                            <select id="reportType" required>
+                                <option value="">Select Type</option>
+                                <option value="monthly">Monthly Summary</option>
+                                <option value="budget">Budget Analysis</option>
+                                <option value="income">Income Report</option>
+                                <option value="expense">Expense Report</option>
+                                <option value="goal">Goal Progress</option>
+                                <option value="comparison">Comparison Report</option>
+                                <option value="custom">Custom Report</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="reportFormat">
+                                <i class="fas fa-file"></i>
+                                Format *
+                            </label>
+                            <select id="reportFormat" required>
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="csv">CSV</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="dateFrom">
+                                <i class="fas fa-calendar-alt"></i>
+                                From Date *
+                            </label>
+                            <input type="date" id="dateFrom" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dateTo">
+                                <i class="fas fa-calendar-times"></i>
+                                To Date *
+                            </label>
+                            <input type="date" id="dateTo" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <h4><i class="fas fa-filter"></i> Filters</h4>
+                        
+                        <div class="filter-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="includeIncomes" checked>
+                                Include Incomes
+                            </label>
+                            
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="includeExpenses" checked>
+                                Include Expenses
+                            </label>
+                            
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="includeBudgets">
+                                Include Budgets
+                            </label>
+                            
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="includeGoals">
+                                Include Goals
+                            </label>
+                            
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="includeCharts">
+                                Include Charts
+                            </label>
+                            
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="includeDetails">
+                                Include Detailed Transactions
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reportDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description (Optional)
+                        </label>
+                        <textarea id="reportDescription" rows="3" placeholder="Enter report description..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="scheduleReport">
+                            <i class="fas fa-calendar-alt"></i>
+                            Schedule this report
+                        </label>
+                    </div>
+
+                    <div id="scheduleOptions" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="scheduleFrequency">
+                                    Frequency
+                                </label>
+                                <select id="scheduleFrequency">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="scheduleDay">
+                                    Day of Month
+                                </label>
+                                <input type="number" id="scheduleDay" min="1" max="31" value="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelGenerateReportBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic"></i>
+                            Generate Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview Modal -->
+    <div class="modal" id="reportPreviewModal">
+        <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h3>Report Preview</h3>
+                <button class="close-modal" id="closeReportPreviewModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="reportPreviewContent">
+                    <!-- Report preview will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="reports.js"></script>
+</body>
+</html>

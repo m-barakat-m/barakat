@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Goals - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
+                <div class="brand-text">
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">Financial Goals</span>
+                </div>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-role" id="userRole">Role</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </button>
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="users.html">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="employees.html">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employees</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profiles.html">
+                            <i class="fas fa-id-card"></i>
+                            <span>Profiles</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Financial Data</li>
+                    <li>
+                        <a href="incomes.html">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Incomes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="expenses.html">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Expenses</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Budget & Goals</li>
+                    <li>
+                        <a href="budgets.html">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Budgets</span>
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="goals.html">
+                            <i class="fas fa-bullseye"></i>
+                            <span>Goals</span>
+                            <span class="badge" id="goalsCount">0</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="notifications.html">
+                            <i class="fas fa-bell"></i>
+                            <span>Notifications</span>
+                            <span class="badge" id="notificationsCount">0</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Categories</li>
+                    <li>
+                        <a href="categories.html">
+                            <i class="fas fa-tags"></i>
+                            <span>Expense Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="income-categories.html">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Income Categories</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Reports</li>
+                    <li>
+                        <a href="reports.html">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="preferences.html">
+                            <i class="fas fa-cog"></i>
+                            <span>Preferences</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>Financial Goals</h1>
+                    <p>Set and track your financial goals</p>
+                </div>
+                <button class="btn btn-primary" id="addGoalBtn">
+                    <i class="fas fa-plus-circle"></i>
+                    Add Goal
+                </button>
+            </div>
+
+            <!-- Goals Overview -->
+            <div class="overview-cards">
+                <div class="overview-card">
+                    <div class="overview-header">
+                        <h3>Total Goals</h3>
+                        <div class="overview-icon total">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                    </div>
+                    <div class="overview-value" id="totalGoalsCount">0</div>
+                    <div class="overview-change">
+                        <i class="fas fa-flag"></i>
+                        <span id="completedGoals">0</span> completed
+                    </div>
+                </div>
+
+                <div class="overview-card">
+                    <div class="overview-header">
+                        <h3>Total Target</h3>
+                        <div class="overview-icon target">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                    </div>
+                    <div class="overview-value" id="totalTargetAmount">$0</div>
+                    <div class="overview-change">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span id="totalSaved">$0</span> saved
+                    </div>
+                </div>
+
+                <div class="overview-card">
+                    <div class="overview-header">
+                        <h3>Avg. Progress</h3>
+                        <div class="overview-icon progress">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="overview-value" id="avgProgress">0%</div>
+                    <div class="overview-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="onTrackGoals">0</span> on track
+                    </div>
+                </div>
+
+                <div class="overview-card">
+                    <div class="overview-header">
+                        <h3>Next Deadline</h3>
+                        <div class="overview-icon deadline">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                    <div class="overview-value" id="nextDeadline">-</div>
+                    <div class="overview-change">
+                        <i class="fas fa-clock"></i>
+                        <span id="daysRemaining">-</span> days
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Progress Chart -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <h3>Goals Progress Overview</h3>
+                    <div class="chart-period">
+                        <select id="goalFilter" class="chart-select">
+                            <option value="all">All Goals</option>
+                            <option value="active">Active Only</option>
+                            <option value="savings">Savings Goals</option>
+                            <option value="debt">Debt Goals</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="goalsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Goals Grid -->
+            <div class="section-header">
+                <h3>Your Financial Goals</h3>
+                <div class="view-controls">
+                    <select id="sortGoals" class="filter-select">
+                        <option value="priority">By Priority</option>
+                        <option value="deadline">By Deadline</option>
+                        <option value="progress">By Progress</option>
+                        <option value="amount">By Amount</option>
+                    </select>
+                    <button class="btn btn-secondary" id="exportGoalsBtn">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+
+            <div class="goals-grid" id="goalsGrid">
+                <!-- Goal cards will be loaded here dynamically -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading goals data...</p>
+                </div>
+            </div>
+
+            <!-- Goal Templates -->
+            <div class="recommendations-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-lightbulb"></i> Goal Templates</h3>
+                    <small>Quickly create common financial goals</small>
+                </div>
+                <div class="recommendations-grid" id="goalTemplatesGrid">
+                    <div class="recommendation-card">
+                        <div class="recommendation-icon">
+                            <i class="fas fa-piggy-bank"></i>
+                        </div>
+                        <div class="recommendation-content">
+                            <h4>Emergency Fund</h4>
+                            <p>Save 3-6 months of living expenses for emergencies.</p>
+                            <small>Recommended: $5,000 - $15,000</small>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="goalManager.useTemplate('emergency')">
+                            Use Template
+                        </button>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <div class="recommendation-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="recommendation-content">
+                            <h4>Debt Free</h4>
+                            <p>Pay off credit card debt and become debt free.</p>
+                            <small>Start with highest interest debt</small>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="goalManager.useTemplate('debt')">
+                            Use Template
+                        </button>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <div class="recommendation-icon">
+                            <i class="fas fa-plane"></i>
+                        </div>
+                        <div class="recommendation-content">
+                            <h4>Vacation Fund</h4>
+                            <p>Save for your dream vacation.</p>
+                            <small>Typical target: $2,000 - $5,000</small>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="goalManager.useTemplate('vacation')">
+                            Use Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div class="modal" id="addGoalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Financial Goal</h3>
+                <button class="close-modal" id="closeAddGoalModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addGoalForm">
+                    <div class="form-group">
+                        <label for="goalTitle">
+                            <i class="fas fa-bullseye"></i>
+                            Goal Title *
+                        </label>
+                        <input type="text" id="goalTitle" placeholder="e.g., Save for down payment" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="goalType">
+                                <i class="fas fa-tag"></i>
+                                Goal Type *
+                            </label>
+                            <select id="goalType" required>
+                                <option value="">Select Type</option>
+                                <option value="savings">Savings Goal</option>
+                                <option value="debt">Debt Reduction</option>
+                                <option value="investment">Investment</option>
+                                <option value="purchase">Major Purchase</option>
+                                <option value="education">Education</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="goalPriority">
+                                <i class="fas fa-flag"></i>
+                                Priority
+                            </label>
+                            <select id="goalPriority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="targetAmount">
+                                <i class="fas fa-dollar-sign"></i>
+                                Target Amount *
+                            </label>
+                            <input type="number" id="targetAmount" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="currentAmount">
+                                <i class="fas fa-wallet"></i>
+                                Current Amount
+                            </label>
+                            <input type="number" id="currentAmount" step="0.01" min="0" value="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate">
+                                <i class="fas fa-calendar-alt"></i>
+                                Start Date *
+                            </label>
+                            <input type="date" id="startDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="targetDate">
+                                <i class="fas fa-calendar-check"></i>
+                                Target Date *
+                            </label>
+                            <input type="date" id="targetDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goalDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="goalDescription" rows="3" placeholder="Describe your goal..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="goalNotifications">
+                            <i class="fas fa-bell"></i>
+                            Enable progress notifications
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelAddGoalBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Goal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Goal Modal -->
+    <div class="modal" id="editGoalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Goal</h3>
+                <button class="close-modal" id="closeEditGoalModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editGoalForm">
+                    <input type="hidden" id="editGoalId">
+                    
+                    <div class="form-group">
+                        <label for="editGoalTitle">
+                            <i class="fas fa-bullseye"></i>
+                            Goal Title *
+                        </label>
+                        <input type="text" id="editGoalTitle" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editGoalType">
+                                <i class="fas fa-tag"></i>
+                                Goal Type *
+                            </label>
+                            <select id="editGoalType" required>
+                                <option value="savings">Savings Goal</option>
+                                <option value="debt">Debt Reduction</option>
+                                <option value="investment">Investment</option>
+                                <option value="purchase">Major Purchase</option>
+                                <option value="education">Education</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editGoalPriority">
+                                <i class="fas fa-flag"></i>
+                                Priority
+                            </label>
+                            <select id="editGoalPriority">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editTargetAmount">
+                                <i class="fas fa-dollar-sign"></i>
+                                Target Amount *
+                            </label>
+                            <input type="number" id="editTargetAmount" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editCurrentAmount">
+                                <i class="fas fa-wallet"></i>
+                                Current Amount *
+                            </label>
+                            <input type="number" id="editCurrentAmount" step="0.01" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editStartDate">
+                                <i class="fas fa-calendar-alt"></i>
+                                Start Date *
+                            </label>
+                            <input type="date" id="editStartDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editTargetDate">
+                                <i class="fas fa-calendar-check"></i>
+                                Target Date *
+                            </label>
+                            <input type="date" id="editTargetDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editGoalDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="editGoalDescription" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editGoalNotifications">
+                            <i class="fas fa-bell"></i>
+                            Enable progress notifications
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelEditGoalBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Update Goal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="goals.js"></script>
+</body>
+</html>

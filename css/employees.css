@@ -1,0 +1,366 @@
+/* ===== EMPLOYEES PAGE STYLES ===== */
+
+/* Role-specific icons */
+.stat-icon.roles {
+    background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%);
+}
+
+.stat-icon.recent {
+    background: linear-gradient(135deg, #f46b45 0%, #eea849 100%);
+}
+
+/* Chart Section */
+.chart-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-md);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.chart-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.chart-select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+/* Permissions Section */
+.permissions-section {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: var(--bg-hover);
+    border-radius: var(--radius-lg);
+}
+
+.permissions-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.permission-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+}
+
+.permission-item i {
+    color: var(--success-color);
+    font-size: 0.875rem;
+}
+
+.permission-item i.fa-times {
+    color: var(--danger-color);
+}
+
+/* Password Reset Section */
+.password-reset-section {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: var(--bg-hover);
+    border-radius: var(--radius-lg);
+}
+
+.password-reset-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.reset-password-action {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.reset-password-action input {
+    flex: 1;
+}
+
+.reset-password-action .btn {
+    white-space: nowrap;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.password-strength.weak {
+    color: var(--danger-color);
+}
+
+.password-strength.medium {
+    color: var(--warning-color);
+}
+
+.password-strength.strong {
+    color: var(--success-color);
+}
+
+/* Role Badges */
+.role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-admin {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.role-supervisor-manager {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.role-customer-service-manager {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.role-supervisor {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.role-customer-service {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+.role-monitor {
+    background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%);
+    color: white;
+}
+
+/* Employee Details View */
+.employee-details-view {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.employee-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--tertiary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0 auto 1.5rem;
+}
+
+.employee-basic-info {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.employee-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.employee-email {
+    color: var(--text-light);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.employee-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.employee-stat {
+    background: var(--bg-hover);
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.employee-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.employee-stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Activity Timeline */
+.activity-timeline {
+    margin-top: 2rem;
+}
+
+.activity-timeline h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.timeline-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.timeline-item:last-child {
+    border-bottom: none;
+}
+
+.timeline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.timeline-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.timeline-description {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+}
+
+.timeline-time {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+/* Modal Overrides for Employees */
+#addEmployeeModal .modal-content,
+#editEmployeeModal .modal-content {
+    max-width: 600px;
+}
+
+/* Responsive Design for Employees Page */
+@media (max-width: 768px) {
+    .permissions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .reset-password-action {
+        flex-direction: column;
+    }
+    
+    .reset-password-action .btn {
+        width: 100%;
+    }
+    
+    .employee-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .employee-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .chart-select {
+        width: 100%;
+    }
+}
+
+/* Animation for role badges */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.role-badge {
+    animation: pulse 2s infinite;
+}
+
+.role-badge:hover {
+    animation: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}

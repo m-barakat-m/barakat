@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
+                <div class="brand-text">
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">Notifications Center</span>
+                </div>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-role" id="userRole">Role</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </button>
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="users.html">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="employees.html">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employees</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profiles.html">
+                            <i class="fas fa-id-card"></i>
+                            <span>Profiles</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Financial Data</li>
+                    <li>
+                        <a href="incomes.html">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Incomes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="expenses.html">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Expenses</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Budget & Goals</li>
+                    <li>
+                        <a href="budgets.html">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Budgets</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="goals.html">
+                            <i class="fas fa-bullseye"></i>
+                            <span>Goals</span>
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="notifications.html">
+                            <i class="fas fa-bell"></i>
+                            <span>Notifications</span>
+                            <span class="badge" id="notificationsCount">0</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Categories</li>
+                    <li>
+                        <a href="categories.html">
+                            <i class="fas fa-tags"></i>
+                            <span>Expense Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="income-categories.html">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Income Categories</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Reports</li>
+                    <li>
+                        <a href="reports.html">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="preferences.html">
+                            <i class="fas fa-cog"></i>
+                            <span>Preferences</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>Notifications Center</h1>
+                    <p>Manage your alerts and notifications</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="markAllReadBtn">
+                        <i class="fas fa-check-double"></i>
+                        Mark All as Read
+                    </button>
+                    <button class="btn btn-primary" id="settingsBtn">
+                        <i class="fas fa-cog"></i>
+                        Notification Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notification Filters -->
+            <div class="notifications-filters">
+                <span class="filter-tag active" data-filter="all">All</span>
+                <span class="filter-tag" data-filter="unread">Unread</span>
+                <span class="filter-tag" data-filter="budget">Budget</span>
+                <span class="filter-tag" data-filter="goal">Goals</span>
+                <span class="filter-tag" data-filter="expense">Expenses</span>
+                <span class="filter-tag" data-filter="income">Income</span>
+                <span class="filter-tag" data-filter="system">System</span>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Notifications</h3>
+                        <div class="stat-icon total">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalNotifications">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-eye-slash"></i>
+                        <span id="unreadCount">0</span> unread
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Today</h3>
+                        <div class="stat-icon today">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="todayNotifications">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-clock"></i>
+                        Last 24 hours
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Budget Alerts</h3>
+                        <div class="stat-icon budget">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="budgetAlertsCount">0</div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="criticalBudgetAlerts">0</span> critical
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Goal Updates</h3>
+                        <div class="stat-icon goal">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="goalUpdatesCount">0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="completedGoals">0</span> completed
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications List -->
+            <div class="section-header">
+                <h3>Recent Notifications</h3>
+                <div class="view-controls">
+                    <select id="sortNotifications" class="filter-select">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="priority">By Priority</option>
+                    </select>
+                    <button class="btn btn-secondary" id="clearAllBtn">
+                        <i class="fas fa-trash"></i>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+
+            <div class="notifications-list" id="notificationsList">
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading notifications...</p>
+                </div>
+            </div>
+
+            <!-- Notification Preferences -->
+            <div class="preferences-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-sliders-h"></i> Notification Preferences</h3>
+                </div>
+                <div class="preferences-grid">
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>Budget Alerts</h4>
+                            <p>Get notified when you're nearing or exceeding budget limits</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="prefBudgetAlerts" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>Goal Progress</h4>
+                            <p>Receive updates on your financial goals progress</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="prefGoalUpdates" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>Large Transactions</h4>
+                            <p>Alert for transactions above your set threshold</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="prefLargeTransactions" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>Monthly Reports</h4>
+                            <p>Receive monthly financial summary reports</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="prefMonthlyReports" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>System Updates</h4>
+                            <p>Important system notifications and maintenance alerts</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="prefSystemUpdates" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <h4>Email Notifications</h4>
+                            <p>Receive notifications via email</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="prefEmailNotifications">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Notification Settings</h3>
+                <button class="close-modal" id="closeSettingsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <h4><i class="fas fa-bell"></i> Alert Thresholds</h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="budgetThreshold">
+                                    Budget Alert (%)
+                                </label>
+                                <input type="number" id="budgetThreshold" min="50" max="100" value="80">
+                                <small>Alert when budget usage reaches this percentage</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="transactionThreshold">
+                                    Large Transaction ($)
+                                </label>
+                                <input type="number" id="transactionThreshold" min="100" value="1000">
+                                <small>Alert for transactions above this amount</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <h4><i class="fas fa-clock"></i> Notification Schedule</h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quietStart">
+                                    Quiet Hours Start
+                                </label>
+                                <input type="time" id="quietStart" value="22:00">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="quietEnd">
+                                    Quiet Hours End
+                                </label>
+                                <input type="time" id="quietEnd" value="08:00">
+                            </div>
+                        </div>
+                        <small>Notifications will be muted during quiet hours</small>
+                    </div>
+
+                    <div class="form-group">
+                        <h4><i class="fas fa-envelope"></i> Email Preferences</h4>
+                        
+                        <div class="form-group">
+                            <label for="notificationEmail">
+                                Email Address
+                            </label>
+                            <input type="email" id="notificationEmail" placeholder="your@email.com">
+                        </div>
+                        
+                        <div class="form-check-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="emailDailySummary">
+                                Daily summary email
+                            </label>
+                            
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="emailWeeklyReport">
+                                Weekly report email
+                            </label>
+                            
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="emailUrgentAlerts">
+                                Urgent alerts email
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="notifications.js"></script>
+</body>
+</html>
