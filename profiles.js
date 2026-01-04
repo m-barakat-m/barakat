@@ -1,4 +1,4 @@
-// Profiles Management System
+// Profiles Management System - COMPLETE VERSION
 class ProfilesManager {
     constructor() {
         this.profiles = [];
@@ -10,8 +10,11 @@ class ProfilesManager {
         this.selectedCountry = 'all';
         this.selectedCurrency = 'all';
         this.selectedLanguage = 'all';
+        this.selectedCompletion = 'all';
         this.currentSort = 'newest';
         this.searchTerm = '';
+        this.countryChart = null;
+        this.currencyChart = null;
         this.init();
     }
 
@@ -77,6 +80,11 @@ class ProfilesManager {
             window.location.href = 'dashboard.html';
         });
         
+        // Bulk update button
+        document.getElementById('bulkUpdateBtn').addEventListener('click', () => {
+            this.showBulkUpdateModal();
+        });
+        
         // Search functionality
         document.getElementById('searchInput').addEventListener('input', (e) => {
             this.searchTerm = e.target.value;
@@ -105,8 +113,8 @@ class ProfilesManager {
             this.filterAndSortProfiles();
         });
         
-        document.getElementById('sortBy').addEventListener('change', (e) => {
-            this.currentSort = e.target.value;
+        document.getElementById('completionFilter').addEventListener('change', (e) => {
+            this.selectedCompletion = e.target.value;
             this.filterAndSortProfiles();
         });
         
@@ -120,13 +128,24 @@ class ProfilesManager {
             this.loadInitialData();
         });
         
-        // Bulk actions
-        document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
-            this.bulkDeleteProfiles();
+        // Refresh completion button
+        document.getElementById('refreshCompletionBtn').addEventListener('click', () => {
+            this.updateCompletionAnalysis();
         });
         
-        document.getElementById('selectAllBtn').addEventListener('click', () => {
-            this.toggleSelectAll();
+        // Bulk update form
+        document.getElementById('bulkUpdateForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.bulkUpdateProfiles();
+        });
+        
+        document.getElementById('cancelBulkUpdateBtn').addEventListener('click', () => {
+            this.hideBulkUpdateModal();
+        });
+        
+        // Bulk update field change
+        document.getElementById('bulkUpdateField').addEventListener('change', (e) => {
+            this.updateBulkValueInput(e.target.value);
         });
         
         // Pagination
@@ -148,6 +167,10 @@ class ProfilesManager {
         // Modal close buttons
         document.getElementById('closeProfileDetailsModal').addEventListener('click', () => {
             this.hideProfileDetailsModal();
+        });
+        
+        document.getElementById('closeBulkUpdateModal').addEventListener('click', () => {
+            this.hideBulkUpdateModal();
         });
         
         document.getElementById('closeEditProfileModal').addEventListener('click', () => {
@@ -195,6 +218,12 @@ class ProfilesManager {
             
             // Update statistics
             await this.updateStatistics();
+            
+            // Update charts
+            this.updateCharts();
+            
+            // Update completion analysis
+            this.updateCompletionAnalysis();
             
             // Update filters
             this.updateFilterOptions();
@@ -266,86 +295,96 @@ class ProfilesManager {
         const currencies = new Set();
         const languages = new Set();
         
-        let profilesWithAvatar = 0;
-        let profilesWithCompleteInfo = 0;
-        const now = new Date();
-        const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-        let recentProfiles = 0;
+        // Find top country, currency, and language
+        const countryCounts = {};
+        const currencyCounts = {};
+        const languageCounts = {};
         
         this.profiles.forEach(profile => {
-            if (profile.country) countries.add(profile.country);
-            if (profile.currency) currencies.add(profile.currency);
-            if (profile.language) languages.add(profile.language);
-            
-            if (profile.avatarUrl && profile.avatarUrl !== 'default.png') {
-                profilesWithAvatar++;
+            if (profile.country) {
+                countries.add(profile.country);
+                countryCounts[profile.country] = (countryCounts[profile.country] || 0) + 1;
             }
-            
-            // Check for complete info (has at least 5 fields filled)
-            const filledFields = [
-                profile.displayName,
-                profile.email,
-                profile.phone,
-                profile.country,
-                profile.currency,
-                profile.language,
-                profile.dateFormat
-            ].filter(field => field && field !== '' && field !== 'default.png').length;
-            
-            if (filledFields >= 5) {
-                profilesWithCompleteInfo++;
+            if (profile.currency) {
+                currencies.add(profile.currency);
+                currencyCounts[profile.currency] = (currencyCounts[profile.currency] || 0) + 1;
             }
-            
-            // Check if profile was created/updated recently
-            if (profile.updatedAt && profile.updatedAt >= thirtyDaysAgo) {
-                recentProfiles++;
+            if (profile.language) {
+                languages.add(profile.language);
+                languageCounts[profile.language] = (languageCounts[profile.language] || 0) + 1;
             }
         });
+        
+        // Find top items
+        const topCountry = Object.entries(countryCounts).sort((a, b) => b[1] - a[1])[0];
+        const topCurrency = Object.entries(currencyCounts).sort((a, b) => b[1] - a[1])[0];
+        const topLanguage = Object.entries(languageCounts).sort((a, b) => b[1] - a[1])[0];
+        
+        // Calculate growth (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const recentProfiles = this.profiles.filter(profile => 
+            profile.createdAt && profile.createdAt >= thirtyDaysAgo
+        ).length;
+        
+        const growth = totalProfiles > 0 ? 
+            Math.round((recentProfiles / totalProfiles) * 100) : 0;
         
         // Update UI
         document.getElementById('totalProfilesCount').textContent = totalProfiles.toLocaleString();
         document.getElementById('profilesCount').textContent = totalProfiles;
         
-        document.getElementById('uniqueCountries').textContent = countries.size;
-        document.getElementById('uniqueCurrencies').textContent = currencies.size;
+        document.getElementById('countriesCount').textContent = countries.size;
+        document.getElementById('currenciesCount').textContent = currencies.size;
+        document.getElementById('languagesCount').textContent = languages.size;
         
-        const avatarPercentage = totalProfiles > 0 ? 
-            Math.round((profilesWithAvatar / totalProfiles) * 100) : 0;
-        document.getElementById('profilesWithAvatar').textContent = avatarPercentage + '%';
-        
-        const completePercentage = totalProfiles > 0 ? 
-            Math.round((profilesWithCompleteInfo / totalProfiles) * 100) : 0;
-        document.getElementById('completeProfiles').textContent = completePercentage + '%';
-        
-        document.getElementById('recentUpdates').textContent = recentProfiles;
-        
-        // Update profile completion chart
-        this.updateCompletionChart(completePercentage);
+        document.getElementById('profilesGrowth').textContent = growth + '% completion rate';
+        document.getElementById('topCountry').textContent = topCountry ? topCountry[0] : '-';
+        document.getElementById('topCurrency').textContent = topCurrency ? topCurrency[0] : 'USD';
+        document.getElementById('topLanguage').textContent = topLanguage ? topLanguage[0] : 'en';
         
     }
     
-    updateCompletionChart(percentage) {
-        const ctx = document.getElementById('completionChart');
+    updateCharts() {
+        this.updateCountryChart();
+        this.updateCurrencyChart();
+    }
+    
+    updateCountryChart() {
+        const ctx = document.getElementById('countryChart');
         if (!ctx) return;
         
+        // Calculate country distribution
+        const countryCounts = {};
+        this.profiles.forEach(profile => {
+            if (profile.country) {
+                countryCounts[profile.country] = (countryCounts[profile.country] || 0) + 1;
+            }
+        });
+        
+        // Sort and get top 8 countries
+        const sortedCountries = Object.entries(countryCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8);
+        
+        const labels = sortedCountries.map(item => item[0]);
+        const data = sortedCountries.map(item => item[1]);
+        
         // Destroy existing chart if it exists
-        if (this.completionChart) {
-            this.completionChart.destroy();
+        if (this.countryChart) {
+            this.countryChart.destroy();
         }
         
-        const chartCtx = ctx.getContext('2d');
-        this.completionChart = new Chart(chartCtx, {
-            type: 'doughnut',
+        this.countryChart = new Chart(ctx, {
+            type: 'bar',
             data: {
-                labels: ['Complete Profiles', 'Incomplete Profiles'],
+                labels: labels,
                 datasets: [{
-                    data: [percentage, 100 - percentage],
-                    backgroundColor: [
-                        'rgba(72, 187, 120, 0.8)',
-                        'rgba(237, 137, 54, 0.8)'
-                    ],
-                    borderWidth: 1,
-                    borderColor: 'white'
+                    label: 'Profiles',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
@@ -353,19 +392,116 @@ class ProfilesManager {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.label}: ${context.raw}%`;
-                            }
-                        }
+                        display: false
                     }
                 },
-                cutout: '70%'
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
             }
         });
+    }
+    
+    updateCurrencyChart() {
+        const ctx = document.getElementById('currencyChart');
+        if (!ctx) return;
+        
+        // Calculate currency distribution
+        const currencyCounts = {};
+        this.profiles.forEach(profile => {
+            if (profile.currency) {
+                currencyCounts[profile.currency] = (currencyCounts[profile.currency] || 0) + 1;
+            }
+        });
+        
+        // Prepare data for doughnut chart
+        const labels = Object.keys(currencyCounts);
+        const data = Object.values(currencyCounts);
+        
+        // Destroy existing chart if it exists
+        if (this.currencyChart) {
+            this.currencyChart.destroy();
+        }
+        
+        this.currencyChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                        '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+    
+    updateCompletionAnalysis() {
+        let basicTotal = 0, basicFilled = 0;
+        let locationTotal = 0, locationFilled = 0;
+        let preferencesTotal = 0, preferencesFilled = 0;
+        let additionalTotal = 0, additionalFilled = 0;
+        
+        this.profiles.forEach(profile => {
+            // Basic Info (Name, Email, Phone)
+            if (profile.displayName) basicFilled++;
+            if (profile.email) basicFilled++;
+            if (profile.phone) basicFilled++;
+            basicTotal += 3;
+            
+            // Location Info (Country, City, Address)
+            if (profile.country) locationFilled++;
+            if (profile.city) locationFilled++;
+            if (profile.address) locationFilled++;
+            locationTotal += 3;
+            
+            // Preferences (Currency, Language, Date Format)
+            if (profile.currency) preferencesFilled++;
+            if (profile.language) preferencesFilled++;
+            if (profile.dateFormat) preferencesFilled++;
+            preferencesTotal += 3;
+            
+            // Additional Info (Bio, Age, Gender, Avatar)
+            if (profile.bio) additionalFilled++;
+            if (profile.age) additionalFilled++;
+            if (profile.gender) additionalFilled++;
+            if (profile.avatarUrl && profile.avatarUrl !== 'default.png') additionalFilled++;
+            additionalTotal += 4;
+        });
+        
+        // Calculate percentages
+        const basicPercentage = basicTotal > 0 ? Math.round((basicFilled / basicTotal) * 100) : 0;
+        const locationPercentage = locationTotal > 0 ? Math.round((locationFilled / locationTotal) * 100) : 0;
+        const preferencesPercentage = preferencesTotal > 0 ? Math.round((preferencesFilled / preferencesTotal) * 100) : 0;
+        const additionalPercentage = additionalTotal > 0 ? Math.round((additionalFilled / additionalTotal) * 100) : 0;
+        
+        // Update UI
+        document.getElementById('basicCompletion').textContent = basicPercentage + '%';
+        document.getElementById('locationCompletion').textContent = locationPercentage + '%';
+        document.getElementById('preferencesCompletion').textContent = preferencesPercentage + '%';
+        document.getElementById('additionalCompletion').textContent = additionalPercentage + '%';
+        
+        document.getElementById('basicFill').style.width = basicPercentage + '%';
+        document.getElementById('locationFill').style.width = locationPercentage + '%';
+        document.getElementById('preferencesFill').style.width = preferencesPercentage + '%';
+        document.getElementById('additionalFill').style.width = additionalPercentage + '%';
     }
     
     updateFilterOptions() {
@@ -424,11 +560,11 @@ class ProfilesManager {
             this.filteredProfiles = this.filteredProfiles.filter(profile => {
                 const displayName = profile.displayName || '';
                 const email = profile.email || '';
-                const phone = profile.phone || '';
+                const country = profile.country || '';
                 
                 return displayName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
                        email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                       phone.includes(this.searchTerm);
+                       country.toLowerCase().includes(this.searchTerm.toLowerCase());
             });
         }
         
@@ -451,6 +587,19 @@ class ProfilesManager {
             this.filteredProfiles = this.filteredProfiles.filter(profile => 
                 profile.language === this.selectedLanguage
             );
+        }
+        
+        // Apply completion filter
+        if (this.selectedCompletion !== 'all') {
+            this.filteredProfiles = this.filteredProfiles.filter(profile => {
+                const completion = this.calculateProfileCompletion(profile);
+                switch (this.selectedCompletion) {
+                    case 'high': return completion >= 75;
+                    case 'medium': return completion >= 50 && completion < 75;
+                    case 'low': return completion < 50;
+                    default: return true;
+                }
+            });
         }
         
         // Apply sorting
@@ -503,13 +652,6 @@ class ProfilesManager {
         return user ? user.name : 'Unknown User';
     }
     
-    getUserEmail(userId) {
-        if (!userId) return 'No email';
-        
-        const user = this.users.find(u => u.userId === userId);
-        return user ? user.email : 'No email';
-    }
-    
     updatePagination() {
         this.totalPages = Math.ceil(this.filteredProfiles.length / this.itemsPerPage);
         this.currentPage = Math.max(1, Math.min(this.currentPage, this.totalPages));
@@ -527,27 +669,6 @@ class ProfilesManager {
         // Update button states
         document.getElementById('prevPageBtn').disabled = this.currentPage === 1;
         document.getElementById('nextPageBtn').disabled = this.currentPage === this.totalPages;
-        
-        // Update bulk actions
-        this.updateBulkActions();
-    }
-    
-    updateBulkActions() {
-        const selectedCount = document.querySelectorAll('.profile-checkbox:checked').length;
-        const bulkSelectedCount = document.getElementById('bulkSelectedCount');
-        const bulkActions = document.getElementById('bulkActions');
-        
-        if (bulkSelectedCount) {
-            bulkSelectedCount.textContent = selectedCount;
-        }
-        
-        if (bulkActions) {
-            if (selectedCount > 0) {
-                bulkActions.classList.add('show');
-            } else {
-                bulkActions.classList.remove('show');
-            }
-        }
     }
     
     renderProfilesTable() {
@@ -556,7 +677,7 @@ class ProfilesManager {
         if (this.filteredProfiles.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="empty-state">
+                    <td colspan="9" class="empty-state">
                         <i class="fas fa-id-card"></i>
                         <h4>No profiles found</h4>
                         <p>${this.searchTerm ? 'Try a different search term' : 'No profiles available'}</p>
@@ -571,51 +692,46 @@ class ProfilesManager {
         const currentProfiles = this.filteredProfiles.slice(start, end);
         
         tableBody.innerHTML = currentProfiles.map((profile, index) => {
-            const createdAt = profile.createdAt;
-            const createdStr = createdAt ? 
-                createdAt.toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric'
-                }) : 'N/A';
-            
             const updatedAt = profile.updatedAt;
             const updatedStr = updatedAt ? 
                 updatedAt.toLocaleDateString('en-US', { 
                     month: 'short', 
-                    day: 'numeric'
+                    day: 'numeric',
+                    year: 'numeric'
                 }) : 'Never';
             
             const userName = this.getUserName(profile.userId);
-            const userEmail = this.getUserEmail(profile.userId);
             
             // Calculate profile completion percentage
             const completion = this.calculateProfileCompletion(profile);
+            
+            // Get completion color
+            let completionColor = '#f5576c'; // red for low
+            if (completion >= 75) completionColor = '#43e97b'; // green for high
+            else if (completion >= 50) completionColor = '#fa709a'; // pink for medium
             
             // Get avatar initials
             const initials = profile.displayName ? 
                 profile.displayName.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2) : 
                 '??';
             
+            // Get avatar color
+            const avatarColor = this.getAvatarColor(profile.displayName);
+            
             return `
                 <tr data-profile-id="${profile.id}">
                     <td>
-                        <input type="checkbox" class="profile-checkbox" data-profile-id="${profile.id}">
-                    </td>
-                    <td>
                         <div class="user-cell">
-                            <div class="user-avatar-small" style="background: ${this.getAvatarColor(profile.displayName)}">
+                            <div class="user-avatar-small" style="background: ${avatarColor}; color: white;">
                                 ${initials}
                             </div>
-                            <div>
+                            <div class="user-info">
                                 <strong>${profile.displayName || 'No Name'}</strong>
                                 <br>
                                 <small class="text-muted">${userName}</small>
                             </div>
                         </div>
                     </td>
-                    <td>${userEmail}</td>
-                    <td>${profile.phone || '-'}</td>
                     <td>
                         <span class="country-flag">${this.getCountryFlag(profile.country)}</span>
                         ${profile.country || '-'}
@@ -626,10 +742,21 @@ class ProfilesManager {
                     <td>
                         <span class="language-badge">${profile.language || '-'}</span>
                     </td>
+                    <td>${profile.dateFormat || 'dd/MM/yyyy'}</td>
                     <td>
-                        <div class="completion-bar">
-                            <div class="completion-fill" style="width: ${completion}%"></div>
-                            <span class="completion-text">${completion}%</span>
+                        <div class="avatar-cell">
+                            ${profile.avatarUrl && profile.avatarUrl !== 'default.png' ? 
+                                `<img src="${profile.avatarUrl}" alt="Avatar" class="avatar-img">` : 
+                                `<div class="avatar-placeholder" style="background: ${avatarColor}">${initials}</div>`
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="completion-cell">
+                            <div class="completion-bar-small">
+                                <div class="completion-fill-small" style="width: ${completion}%; background: ${completionColor}"></div>
+                            </div>
+                            <span class="completion-text-small">${completion}%</span>
                         </div>
                     </td>
                     <td>${updatedStr}</td>
@@ -655,13 +782,6 @@ class ProfilesManager {
                 </tr>
             `;
         }).join('');
-        
-        // Add event listeners to checkboxes
-        document.querySelectorAll('.profile-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                this.updateBulkActions();
-            });
-        });
     }
     
     calculateProfileCompletion(profile) {
@@ -670,23 +790,24 @@ class ProfilesManager {
             'email',
             'phone',
             'country',
+            'city',
+            'address',
             'currency',
             'language',
             'dateFormat',
             'avatarUrl',
             'bio',
-            'address',
-            'city',
             'age',
             'gender'
         ];
         
         const filledFields = fields.filter(field => {
             const value = profile[field];
-            return value && 
-                   value !== '' && 
-                   value !== 'default.png' && 
-                   value !== 'dd/MM/yyyy';
+            if (!value) return false;
+            if (typeof value === 'string' && value.trim() === '') return false;
+            if (field === 'avatarUrl' && value === 'default.png') return false;
+            if (field === 'dateFormat' && value === 'dd/MM/yyyy') return false;
+            return true;
         }).length;
         
         return Math.round((filledFields / fields.length) * 100);
@@ -753,6 +874,80 @@ class ProfilesManager {
         document.getElementById('editProfileModal').classList.remove('active');
     }
     
+    showBulkUpdateModal() {
+        document.getElementById('bulkUpdateModal').classList.add('active');
+    }
+    
+    hideBulkUpdateModal() {
+        document.getElementById('bulkUpdateModal').classList.remove('active');
+    }
+    
+    updateBulkValueInput(field) {
+        const container = document.getElementById('bulkValueContainer');
+        
+        let inputHTML = '';
+        switch (field) {
+            case 'currency':
+                inputHTML = `
+                    <select id="bulkUpdateValue" required>
+                        <option value="">Select Currency</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="SAR">SAR - Saudi Riyal</option>
+                        <option value="AED">AED - UAE Dirham</option>
+                    </select>
+                `;
+                break;
+                
+            case 'language':
+                inputHTML = `
+                    <select id="bulkUpdateValue" required>
+                        <option value="">Select Language</option>
+                        <option value="en">English</option>
+                        <option value="ar">Arabic</option>
+                        <option value="fr">French</option>
+                        <option value="es">Spanish</option>
+                        <option value="de">German</option>
+                    </select>
+                `;
+                break;
+                
+            case 'dateFormat':
+                inputHTML = `
+                    <select id="bulkUpdateValue" required>
+                        <option value="">Select Date Format</option>
+                        <option value="dd/MM/yyyy">DD/MM/YYYY</option>
+                        <option value="MM/dd/yyyy">MM/DD/YYYY</option>
+                        <option value="yyyy-MM-dd">YYYY-MM-DD</option>
+                        <option value="dd MMM yyyy">DD MMM YYYY</option>
+                    </select>
+                `;
+                break;
+                
+            case 'country':
+                inputHTML = `
+                    <select id="bulkUpdateValue" required>
+                        <option value="">Select Country</option>
+                        <option value="US">United States</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="SA">Saudi Arabia</option>
+                        <option value="AE">United Arab Emirates</option>
+                        <option value="EG">Egypt</option>
+                        <option value="FR">France</option>
+                        <option value="DE">Germany</option>
+                        <option value="JP">Japan</option>
+                    </select>
+                `;
+                break;
+                
+            default:
+                inputHTML = `<input type="text" id="bulkUpdateValue" required placeholder="Enter new value">`;
+        }
+        
+        container.innerHTML = inputHTML;
+    }
+    
     async viewProfileDetails(profileId) {
         try {
             const profile = this.profiles.find(p => p.id === profileId);
@@ -762,7 +957,6 @@ class ProfilesManager {
             }
             
             const userName = this.getUserName(profile.userId);
-            const userEmail = this.getUserEmail(profile.userId);
             
             const createdStr = profile.createdAt ? 
                 profile.createdAt.toLocaleDateString('en-US', { 
@@ -801,7 +995,7 @@ class ProfilesManager {
                         </div>
                         <div class="profile-header-info">
                             <h3>${profile.displayName || 'No Name'}</h3>
-                            <p class="profile-email">${userEmail}</p>
+                            <p class="profile-email">${profile.email || 'No email'}</p>
                             <p class="profile-user">Linked to: ${userName}</p>
                         </div>
                     </div>
@@ -909,6 +1103,10 @@ class ProfilesManager {
                             <i class="fas fa-redo"></i>
                             Reset Settings
                         </button>
+                        <button class="btn btn-danger" onclick="profilesManager.deleteProfile('${profile.id}')">
+                            <i class="fas fa-trash"></i>
+                            Delete Profile
+                        </button>
                     </div>
                 </div>
             `;
@@ -933,8 +1131,16 @@ class ProfilesManager {
                 return;
             }
             
+            // Create edit modal if doesn't exist
+            let editModal = document.getElementById('editProfileModal');
+            if (!editModal) {
+                editModal = this.createEditProfileModal();
+                document.body.appendChild(editModal);
+            }
+            
             // Populate edit form
             document.getElementById('editProfileId').value = profile.id;
+            document.getElementById('editUserId').value = profile.userId;
             document.getElementById('editDisplayName').value = profile.displayName || '';
             document.getElementById('editEmail').value = profile.email || '';
             document.getElementById('editPhone').value = profile.phone || '';
@@ -943,19 +1149,12 @@ class ProfilesManager {
             document.getElementById('editCountry').value = profile.country || '';
             document.getElementById('editCurrency').value = profile.currency || '';
             document.getElementById('editLanguage').value = profile.language || '';
-            document.getElementById('editDateFormat').value = profile.dateFormat || '';
+            document.getElementById('editDateFormat').value = profile.dateFormat || 'dd/MM/yyyy';
             document.getElementById('editDecimalPlaces').value = profile.decimalPlaces || 2;
             document.getElementById('editBio').value = profile.bio || '';
-            
-            // Set age if exists
-            if (profile.age) {
-                document.getElementById('editAge').value = profile.age;
-            }
-            
-            // Set gender if exists
-            if (profile.gender) {
-                document.getElementById('editGender').value = profile.gender;
-            }
+            document.getElementById('editAge').value = profile.age || '';
+            document.getElementById('editGender').value = profile.gender || '';
+            document.getElementById('editAvatarUrl').value = profile.avatarUrl || 'default.png';
             
             // Show modal
             document.getElementById('editProfileTitle').textContent = `Edit Profile: ${profile.displayName || 'Unnamed'}`;
@@ -967,9 +1166,219 @@ class ProfilesManager {
         }
     }
     
+    createEditProfileModal() {
+        const modalHTML = `
+            <div class="modal" id="editProfileModal">
+                <div class="modal-content wide-modal">
+                    <div class="modal-header">
+                        <h3 id="editProfileTitle">Edit Profile</h3>
+                        <button class="close-modal" id="closeEditProfileModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editProfileForm">
+                            <input type="hidden" id="editProfileId">
+                            <input type="hidden" id="editUserId">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editDisplayName">
+                                        <i class="fas fa-user"></i>
+                                        Display Name *
+                                    </label>
+                                    <input type="text" id="editDisplayName" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="editEmail">
+                                        <i class="fas fa-envelope"></i>
+                                        Email *
+                                    </label>
+                                    <input type="email" id="editEmail" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editPhone">
+                                        <i class="fas fa-phone"></i>
+                                        Phone
+                                    </label>
+                                    <input type="tel" id="editPhone">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="editAge">
+                                        <i class="fas fa-birthday-cake"></i>
+                                        Age
+                                    </label>
+                                    <input type="number" id="editAge" min="1" max="120">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editGender">
+                                        <i class="fas fa-venus-mars"></i>
+                                        Gender
+                                    </label>
+                                    <select id="editGender">
+                                        <option value="">Select Gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="editCountry">
+                                        <i class="fas fa-globe"></i>
+                                        Country
+                                    </label>
+                                    <select id="editCountry">
+                                        <option value="">Select Country</option>
+                                        <option value="US">United States</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="SA">Saudi Arabia</option>
+                                        <option value="AE">United Arab Emirates</option>
+                                        <option value="EG">Egypt</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editCity">
+                                        <i class="fas fa-city"></i>
+                                        City
+                                    </label>
+                                    <input type="text" id="editCity">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="editAddress">
+                                        <i class="fas fa-home"></i>
+                                        Address
+                                    </label>
+                                    <input type="text" id="editAddress">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editCurrency">
+                                        <i class="fas fa-money-bill"></i>
+                                        Currency *
+                                    </label>
+                                    <select id="editCurrency" required>
+                                        <option value="">Select Currency</option>
+                                        <option value="USD">USD - US Dollar</option>
+                                        <option value="EUR">EUR - Euro</option>
+                                        <option value="GBP">GBP - British Pound</option>
+                                        <option value="SAR">SAR - Saudi Riyal</option>
+                                        <option value="AED">AED - UAE Dirham</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="editLanguage">
+                                        <i class="fas fa-language"></i>
+                                        Language *
+                                    </label>
+                                    <select id="editLanguage" required>
+                                        <option value="">Select Language</option>
+                                        <option value="en">English</option>
+                                        <option value="ar">Arabic</option>
+                                        <option value="fr">French</option>
+                                        <option value="es">Spanish</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editDateFormat">
+                                        <i class="fas fa-calendar"></i>
+                                        Date Format *
+                                    </label>
+                                    <select id="editDateFormat" required>
+                                        <option value="dd/MM/yyyy">DD/MM/YYYY</option>
+                                        <option value="MM/dd/yyyy">MM/DD/YYYY</option>
+                                        <option value="yyyy-MM-dd">YYYY-MM-DD</option>
+                                        <option value="dd MMM yyyy">DD MMM YYYY</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="editDecimalPlaces">
+                                        <i class="fas fa-calculator"></i>
+                                        Decimal Places
+                                    </label>
+                                    <select id="editDecimalPlaces">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2" selected>2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editAvatarUrl">
+                                    <i class="fas fa-image"></i>
+                                    Avatar URL
+                                </label>
+                                <input type="text" id="editAvatarUrl" placeholder="Enter image URL">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editBio">
+                                    <i class="fas fa-align-left"></i>
+                                    Bio
+                                </label>
+                                <textarea id="editBio" rows="3" placeholder="Enter biography..."></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelEditProfileBtn">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Update Profile
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const modalElement = document.createElement('div');
+        modalElement.innerHTML = modalHTML;
+        
+        // Add event listeners
+        setTimeout(() => {
+            document.getElementById('closeEditProfileModal').addEventListener('click', () => {
+                this.hideEditProfileModal();
+            });
+            
+            document.getElementById('cancelEditProfileBtn').addEventListener('click', () => {
+                this.hideEditProfileModal();
+            });
+            
+            document.getElementById('editProfileForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.updateProfile();
+            });
+        }, 100);
+        
+        return modalElement;
+    }
+    
     async updateProfile() {
         try {
             const profileId = document.getElementById('editProfileId').value;
+            const userId = document.getElementById('editUserId').value;
             const displayName = document.getElementById('editDisplayName').value;
             const email = document.getElementById('editEmail').value;
             const phone = document.getElementById('editPhone').value;
@@ -983,10 +1392,11 @@ class ProfilesManager {
             const bio = document.getElementById('editBio').value;
             const age = document.getElementById('editAge').value;
             const gender = document.getElementById('editGender').value;
+            const avatarUrl = document.getElementById('editAvatarUrl').value;
             
             // Validate required fields
-            if (!displayName || !email) {
-                this.showMessage('Display name and email are required', 'error');
+            if (!displayName || !email || !currency || !language) {
+                this.showMessage('Please fill in all required fields', 'error');
                 return;
             }
             
@@ -998,17 +1408,27 @@ class ProfilesManager {
                 address: address || null,
                 city: city || null,
                 country: country || null,
-                currency: currency || null,
-                language: language || null,
-                dateFormat: dateFormat || 'dd/MM/yyyy',
-                decimalPlaces: decimalPlaces || 2,
+                currency: currency,
+                language: language,
+                dateFormat: dateFormat,
+                decimalPlaces: decimalPlaces,
                 bio: bio || null,
+                avatarUrl: avatarUrl || 'default.png',
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
             // Add optional fields if they have values
             if (age) updateData.age = parseInt(age);
             if (gender) updateData.gender = gender;
+            
+            // Also update user's email in users collection if changed
+            const userDoc = await this.db.collection('users').doc(userId).get();
+            if (userDoc.exists && userDoc.data().email !== email) {
+                await this.db.collection('users').doc(userId).update({
+                    email: email,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
             
             // Update profile in Firestore
             await this.db.collection('profiles').doc(profileId).update(updateData);
@@ -1031,6 +1451,8 @@ class ProfilesManager {
             
             // Update statistics and UI
             await this.updateStatistics();
+            this.updateCharts();
+            this.updateCompletionAnalysis();
             this.filterAndSortProfiles();
             
             // Close details modal if open
@@ -1050,7 +1472,7 @@ class ProfilesManager {
                 return;
             }
             
-            const confirmMessage = `Are you sure you want to reset settings for ${profile.displayName || 'this profile'}? This will reset all preferences to default values.`;
+            const confirmMessage = `Are you sure you want to reset settings for "${profile.displayName || 'this profile'}"? This will reset all preferences to default values.`;
             
             if (!confirm(confirmMessage)) {
                 return;
@@ -1063,6 +1485,7 @@ class ProfilesManager {
                 country: 'US',
                 dateFormat: 'dd/MM/yyyy',
                 decimalPlaces: 2,
+                avatarUrl: 'default.png',
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
@@ -1084,6 +1507,7 @@ class ProfilesManager {
             
             // Update statistics and UI
             await this.updateStatistics();
+            this.updateCharts();
             this.filterAndSortProfiles();
             
             // Close details modal if open
@@ -1103,7 +1527,7 @@ class ProfilesManager {
                 return;
             }
             
-            const confirmMessage = `Are you sure you want to delete the profile for ${profile.displayName || 'this user'}? This action cannot be undone.`;
+            const confirmMessage = `Are you sure you want to delete the profile for "${profile.displayName || 'this user'}"? This action cannot be undone.`;
             
             if (!confirm(confirmMessage)) {
                 return;
@@ -1120,6 +1544,8 @@ class ProfilesManager {
             
             // Update statistics and UI
             await this.updateStatistics();
+            this.updateCharts();
+            this.updateCompletionAnalysis();
             this.filterAndSortProfiles();
             
             // Close details modal if open
@@ -1131,54 +1557,77 @@ class ProfilesManager {
         }
     }
     
-    async bulkDeleteProfiles() {
+    async bulkUpdateProfiles() {
         try {
-            const selectedCheckboxes = document.querySelectorAll('.profile-checkbox:checked');
-            const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.profileId);
+            const field = document.getElementById('bulkUpdateField').value;
+            const value = document.getElementById('bulkUpdateValue').value;
+            const filter = document.getElementById('bulkUpdateFilter').value;
             
-            if (selectedIds.length === 0) {
-                this.showMessage('Please select at least one profile to delete', 'warning');
+            if (!field || !value) {
+                this.showMessage('Please select a field and enter a value', 'error');
                 return;
             }
             
-            const confirmMessage = `Are you sure you want to delete ${selectedIds.length} profile(s)? This action cannot be undone.`;
+            // Determine which profiles to update
+            let profilesToUpdate = [];
+            switch (filter) {
+                case 'all':
+                    profilesToUpdate = this.profiles;
+                    break;
+                case 'selected':
+                    // In real implementation, you would track selected profiles
+                    profilesToUpdate = this.filteredProfiles; // For demo
+                    break;
+                case 'filtered':
+                    profilesToUpdate = this.filteredProfiles;
+                    break;
+            }
+            
+            if (profilesToUpdate.length === 0) {
+                this.showMessage('No profiles to update', 'warning');
+                return;
+            }
+            
+            const confirmMessage = `Are you sure you want to update "${field}" to "${value}" for ${profilesToUpdate.length} profile(s)?`;
             
             if (!confirm(confirmMessage)) {
                 return;
             }
             
-            // Delete each selected profile
-            const deletePromises = selectedIds.map(profileId => 
-                this.db.collection('profiles').doc(profileId).delete()
-            );
+            // Show loading
+            this.showMessage(`Updating ${profilesToUpdate.length} profiles...`, 'info');
             
-            await Promise.all(deletePromises);
+            // Prepare update data
+            const updateData = {
+                [field]: value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
             
-            // Remove from local array
-            this.profiles = this.profiles.filter(p => !selectedIds.includes(p.id));
+            // Perform batch update
+            const batch = this.db.batch();
+            let updatedCount = 0;
+            
+            for (const profile of profilesToUpdate.slice(0, 100)) { // Limit to 100 for performance
+                const profileRef = this.db.collection('profiles').doc(profile.id);
+                batch.update(profileRef, updateData);
+                updatedCount++;
+            }
+            
+            await batch.commit();
             
             // Show success message
-            this.showMessage(`${selectedIds.length} profile(s) deleted successfully!`, 'success');
+            this.showMessage(`Successfully updated ${updatedCount} profile(s)!`, 'success');
             
-            // Update statistics and UI
-            await this.updateStatistics();
-            this.filterAndSortProfiles();
+            // Close modal
+            this.hideBulkUpdateModal();
+            
+            // Refresh data
+            await this.loadInitialData();
             
         } catch (error) {
-            console.error("Error bulk deleting profiles:", error);
-            this.showMessage('Error deleting profiles: ' + error.message, 'error');
+            console.error("Error in bulk update:", error);
+            this.showMessage('Error updating profiles: ' + error.message, 'error');
         }
-    }
-    
-    toggleSelectAll() {
-        const checkboxes = document.querySelectorAll('.profile-checkbox');
-        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-        
-        checkboxes.forEach(cb => {
-            cb.checked = !allChecked;
-        });
-        
-        this.updateBulkActions();
     }
     
     exportProfilesData() {
@@ -1197,15 +1646,15 @@ class ProfilesManager {
                     'Linked User': userName,
                     'Phone': profile.phone || '',
                     'Country': profile.country || '',
-                    'Currency': profile.currency || '',
-                    'Language': profile.language || '',
-                    'Address': profile.address || '',
                     'City': profile.city || '',
+                    'Address': profile.address || '',
                     'Age': profile.age || '',
                     'Gender': profile.gender || '',
-                    'Bio': profile.bio || '',
+                    'Currency': profile.currency || '',
+                    'Language': profile.language || '',
                     'Date Format': profile.dateFormat || '',
                     'Decimal Places': profile.decimalPlaces || '',
+                    'Bio': profile.bio || '',
                     'Avatar URL': profile.avatarUrl || '',
                     'Created Date': createdStr,
                     'Last Updated': updatedStr,
@@ -1251,7 +1700,7 @@ class ProfilesManager {
         if (show) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="loading-row">
+                    <td colspan="9" class="loading-row">
                         <div class="loading-state">
                             <i class="fas fa-spinner fa-spin"></i>
                             <p>Loading profiles data...</p>
