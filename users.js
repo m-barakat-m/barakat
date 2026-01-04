@@ -1,4 +1,4 @@
-// Users Management System - COMPLETE VERSION
+// Users Management System - COMPLETE VERSION WITH FIXES
 class UsersManager {
     constructor() {
         this.users = [];
@@ -9,6 +9,7 @@ class UsersManager {
         this.currentFilter = 'all';
         this.currentSort = 'newest';
         this.searchTerm = '';
+        this.isProcessing = false;
         this.init();
     }
 
@@ -54,7 +55,7 @@ class UsersManager {
         
         // Check permissions
         if (!authSystem.hasPermission('manageUsers')) {
-            this.showError("You don't have permission to access this page.");
+            this.showMessage("You don't have permission to access this page.", 'error');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 3000);
@@ -79,10 +80,14 @@ class UsersManager {
             this.showAddUserModal();
         });
         
-        // Search functionality
+        // Search functionality with debounce
+        let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            this.searchTerm = e.target.value;
-            this.filterAndSortUsers();
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.searchTerm = e.target.value;
+                this.filterAndSortUsers();
+            }, 300);
         });
         
         document.getElementById('clearSearchBtn').addEventListener('click', () => {
@@ -137,28 +142,14 @@ class UsersManager {
             this.hideUserDetailsModal();
         });
         
-        document.getElementById('closeEditUserModal').addEventListener('click', () => {
-            this.hideEditUserModal();
-        });
-        
         document.getElementById('cancelAddUserBtn').addEventListener('click', () => {
             this.hideAddUserModal();
-        });
-        
-        document.getElementById('cancelEditUserBtn').addEventListener('click', () => {
-            this.hideEditUserModal();
         });
         
         // Add user form
         document.getElementById('addUserForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.addNewUser();
-        });
-        
-        // Edit user form
-        document.getElementById('editUserForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.updateUser();
         });
         
         // Close modals when clicking outside
@@ -180,7 +171,10 @@ class UsersManager {
     }
     
     async loadUsersData() {
+        if (this.isProcessing) return;
+        
         try {
+            this.isProcessing = true;
             // Show loading state
             this.showLoading(true);
             
@@ -211,7 +205,7 @@ class UsersManager {
                 incomesSnapshot.forEach(incomeDoc => {
                     const income = incomeDoc.data();
                     if (income.user_id === userId) {
-                        totalIncome += income.amount || 0;
+                        totalIncome += Number(income.amount) || 0;
                     }
                 });
                 
@@ -220,9 +214,17 @@ class UsersManager {
                 expensesSnapshot.forEach(expenseDoc => {
                     const expense = expenseDoc.data();
                     if (expense.userId === userId) {
-                        totalExpenses += expense.amount || 0;
+                        totalExpenses += Number(expense.amount) || 0;
                     }
                 });
+                
+                // Safely get created date
+                let createdAt = null;
+                if (userData.createdAt && typeof userData.createdAt.toDate === 'function') {
+                    createdAt = userData.createdAt.toDate();
+                } else if (userData.createdAt) {
+                    createdAt = new Date(userData.createdAt);
+                }
                 
                 // Create user object with all data
                 const user = {
@@ -231,7 +233,7 @@ class UsersManager {
                     name: userData.name || 'Unknown',
                     email: userData.email || 'No email',
                     phone: profile?.phone || userData.phone || 'N/A',
-                    createdAt: userData.createdAt || null,
+                    createdAt: createdAt,
                     profileStatus: profile ? 'active' : 'inactive',
                     totalIncome: totalIncome,
                     totalExpenses: totalExpenses,
@@ -252,13 +254,24 @@ class UsersManager {
             // Filter and sort users
             this.filterAndSortUsers();
             
-            // Hide loading state
-            this.showLoading(false);
+            // Cache data for session
+            this.cacheData('users', this.users);
             
         } catch (error) {
             console.error("❌ Error loading users data:", error);
-            this.showError("Error loading users data: " + error.message);
+            this.showMessage("Error loading users data: " + error.message, 'error');
+            
+            // Try to load cached data
+            const cached = this.getCachedData('users');
+            if (cached) {
+                this.users = cached;
+                this.filterAndSortUsers();
+                this.showMessage("Loaded cached data", 'warning');
+            }
+        } finally {
+            // Hide loading state
             this.showLoading(false);
+            this.isProcessing = false;
         }
     }
     
@@ -270,7 +283,7 @@ class UsersManager {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const usersThisMonth = this.users.filter(user => {
-            const joinDate = user.createdAt?.toDate();
+            const joinDate = user.createdAt;
             return joinDate && joinDate >= startOfMonth;
         }).length;
         
@@ -310,7 +323,7 @@ class UsersManager {
             this.filteredUsers = this.users.filter(user => 
                 user.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
                 user.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                (user.phone && user.phone.includes(this.searchTerm))
+                (user.phone && user.phone.toLowerCase().includes(this.searchTerm.toLowerCase()))
             );
         } else {
             this.filteredUsers = [...this.users];
@@ -338,16 +351,16 @@ class UsersManager {
         switch (this.currentSort) {
             case 'newest':
                 this.filteredUsers.sort((a, b) => {
-                    const dateA = a.createdAt?.toDate() || new Date(0);
-                    const dateB = b.createdAt?.toDate() || new Date(0);
+                    const dateA = a.createdAt || new Date(0);
+                    const dateB = b.createdAt || new Date(0);
                     return dateB - dateA;
                 });
                 break;
                 
             case 'oldest':
                 this.filteredUsers.sort((a, b) => {
-                    const dateA = a.createdAt?.toDate() || new Date(0);
-                    const dateB = b.createdAt?.toDate() || new Date(0);
+                    const dateA = a.createdAt || new Date(0);
+                    const dateB = b.createdAt || new Date(0);
                     return dateA - dateB;
                 });
                 break;
@@ -367,7 +380,7 @@ class UsersManager {
     }
     
     updatePagination() {
-        this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+        this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage) || 1;
         this.currentPage = Math.max(1, Math.min(this.currentPage, this.totalPages));
         
         // Update UI
@@ -377,7 +390,7 @@ class UsersManager {
         const start = (this.currentPage - 1) * this.itemsPerPage;
         const end = Math.min(start + this.itemsPerPage, this.filteredUsers.length);
         
-        document.getElementById('showingCount').textContent = (end - start);
+        document.getElementById('showingCount').textContent = Math.max(0, end - start);
         document.getElementById('totalCount').textContent = this.filteredUsers.length;
         
         // Update button states
@@ -389,30 +402,7 @@ class UsersManager {
         const tableBody = document.getElementById('usersTableBody');
         
         if (this.filteredUsers.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="9" class="empty-state">
-                        <i class="fas fa-users"></i>
-                        <h4>No users found</h4>
-                        <p>${this.searchTerm ? 'Try a different search term' : 'No users available'}</p>
-                        <button class="btn btn-primary" id="addFirstUserBtn">
-                            <i class="fas fa-user-plus"></i>
-                            Add First User
-                        </button>
-                    </td>
-                </tr>
-            `;
-            
-            // Add event listener to the button
-            setTimeout(() => {
-                const addFirstUserBtn = document.getElementById('addFirstUserBtn');
-                if (addFirstUserBtn) {
-                    addFirstUserBtn.addEventListener('click', () => {
-                        this.showAddUserModal();
-                    });
-                }
-            }, 100);
-            
+            tableBody.innerHTML = this.renderEmptyState();
             return;
         }
         
@@ -420,8 +410,8 @@ class UsersManager {
         const end = Math.min(start + this.itemsPerPage, this.filteredUsers.length);
         const currentUsers = this.filteredUsers.slice(start, end);
         
-        tableBody.innerHTML = currentUsers.map((user, index) => {
-            const joinDate = user.createdAt?.toDate();
+        tableBody.innerHTML = currentUsers.map((user) => {
+            const joinDate = user.createdAt;
             const joinDateStr = joinDate ? 
                 joinDate.toLocaleDateString('en-US', { 
                     year: 'numeric', 
@@ -430,7 +420,8 @@ class UsersManager {
                 }) : 'N/A';
             
             // Create user ID display (shortened)
-            const shortId = user.userId ? user.userId.substring(0, 8) + '...' : 'N/A';
+            const shortId = user.userId ? 
+                user.userId.substring(0, 8) + (user.userId.length > 8 ? '...' : '') : 'N/A';
             
             return `
                 <tr>
@@ -438,10 +429,10 @@ class UsersManager {
                         ${shortId}
                     </td>
                     <td>
-                        <strong>${user.name}</strong>
+                        <strong>${this.escapeHtml(user.name)}</strong>
                     </td>
-                    <td>${user.email}</td>
-                    <td>${user.phone}</td>
+                    <td>${this.escapeHtml(user.email)}</td>
+                    <td>${this.escapeHtml(user.phone)}</td>
                     <td>${joinDateStr}</td>
                     <td>
                         <span class="status-badge status-${user.profileStatus}">
@@ -458,17 +449,17 @@ class UsersManager {
                         <div class="action-buttons">
                             <button class="action-btn view-btn" 
                                     title="View Details"
-                                    onclick="usersManager.viewUserDetails('${user.id}')">
+                                    onclick="usersManager.viewUserDetails('${this.escapeHtml(user.id)}')">
                                 <i class="fas fa-eye"></i>
                             </button>
                             <button class="action-btn edit-btn" 
                                     title="Edit User"
-                                    onclick="usersManager.editUser('${user.id}')">
+                                    onclick="usersManager.editUser('${this.escapeHtml(user.id)}')">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="action-btn delete-btn" 
                                     title="Delete User"
-                                    onclick="usersManager.deleteUser('${user.id}')">
+                                    onclick="usersManager.confirmDeleteUser('${this.escapeHtml(user.id)}', '${this.escapeHtml(user.name)}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -476,6 +467,22 @@ class UsersManager {
                 </tr>
             `;
         }).join('');
+    }
+    
+    renderEmptyState() {
+        return `
+            <tr>
+                <td colspan="9" class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h4>No users found</h4>
+                    <p>${this.searchTerm ? 'Try a different search term' : 'No users available'}</p>
+                    <button class="btn btn-primary" id="addFirstUserBtn">
+                        <i class="fas fa-user-plus"></i>
+                        Add First User
+                    </button>
+                </td>
+            </tr>
+        `;
     }
     
     prevPage() {
@@ -504,11 +511,17 @@ class UsersManager {
     }
     
     showEditUserModal() {
-        document.getElementById('editUserModal').classList.add('active');
+        const editModal = document.getElementById('editUserModal');
+        if (editModal) {
+            editModal.classList.add('active');
+        }
     }
     
     hideEditUserModal() {
-        document.getElementById('editUserModal').classList.remove('active');
+        const editModal = document.getElementById('editUserModal');
+        if (editModal) {
+            editModal.classList.remove('active');
+        }
     }
     
     showUserDetailsModal() {
@@ -520,23 +533,24 @@ class UsersManager {
     }
     
     async addNewUser() {
+        if (this.isProcessing) return;
+        
         try {
-            const name = document.getElementById('newUserName').value;
-            const email = document.getElementById('newUserEmail').value;
-            const phone = document.getElementById('newUserPhone').value;
+            const name = document.getElementById('newUserName').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim();
+            const phone = document.getElementById('newUserPhone').value.trim();
             const password = document.getElementById('newUserPassword').value;
             const status = document.getElementById('newUserStatus').value;
             
             // Validate inputs
-            if (!name || !email || !password) {
-                this.showMessage('Please fill in all required fields', 'error');
+            const errors = this.validateUserData({ name, email, phone, password, status });
+            if (errors.length > 0) {
+                this.showMessage(errors.join(', '), 'error');
                 return;
             }
             
-            if (password.length < 6) {
-                this.showMessage('Password must be at least 6 characters', 'error');
-                return;
-            }
+            this.isProcessing = true;
+            this.showMessage('Creating user...', 'info');
             
             // Create user in Firebase Auth
             const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
@@ -549,7 +563,8 @@ class UsersManager {
                 phone: phone || null,
                 userId: userId,
                 status: status,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                createdBy: this.auth.currentUser.uid
             });
             
             // Create profile document if status is active
@@ -563,6 +578,7 @@ class UsersManager {
                     language: 'en',
                     country: 'US',
                     avatarUrl: 'default.png',
+                    status: 'active',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -583,23 +599,65 @@ class UsersManager {
             let errorMessage = 'Error creating user: ';
             switch (error.code) {
                 case 'auth/email-already-in-use':
-                    errorMessage += 'Email already in use';
+                    errorMessage = 'Email already in use';
                     break;
                 case 'auth/invalid-email':
-                    errorMessage += 'Invalid email address';
+                    errorMessage = 'Invalid email address';
                     break;
                 case 'auth/weak-password':
-                    errorMessage += 'Password is too weak';
+                    errorMessage = 'Password is too weak (min 6 characters)';
+                    break;
+                case 'auth/operation-not-allowed':
+                    errorMessage = 'User creation is not enabled';
                     break;
                 default:
                     errorMessage += error.message;
             }
             
             this.showMessage(errorMessage, 'error');
+        } finally {
+            this.isProcessing = false;
         }
     }
     
-    // ========== NEW: COMPLETE EDIT USER FUNCTION ==========
+    validateUserData(data) {
+        const errors = [];
+        
+        if (!data.name || data.name.length < 2) {
+            errors.push('Name must be at least 2 characters');
+        }
+        
+        if (!data.email || !this.isValidEmail(data.email)) {
+            errors.push('Valid email is required');
+        }
+        
+        if (!data.password || data.password.length < 6) {
+            errors.push('Password must be at least 6 characters');
+        }
+        
+        if (data.phone && !this.isValidPhone(data.phone)) {
+            errors.push('Invalid phone number format');
+        }
+        
+        return errors;
+    }
+    
+    isValidEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+    
+    isValidPhone(phone) {
+        const re = /^[\+]?[1-9][\d\s\-\(\)\.]{8,}$/;
+        return re.test(phone.replace(/\s/g, ''));
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
     async editUser(userId) {
         try {
             const user = this.users.find(u => u.id === userId);
@@ -608,96 +666,105 @@ class UsersManager {
                 return;
             }
             
-            // Create and show edit modal
-            const modalHTML = `
-                <div class="modal-header">
-                    <h3>Edit User: ${user.name}</h3>
-                    <button class="close-modal" id="closeEditUserModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="editUserForm">
-                        <input type="hidden" id="editUserId" value="${user.id}">
-                        <input type="hidden" id="editUserUID" value="${user.userId}">
-                        
-                        <div class="form-group">
-                            <label for="editUserName">
-                                <i class="fas fa-user"></i>
-                                Full Name *
-                            </label>
-                            <input type="text" id="editUserName" value="${user.name}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editUserEmail">
-                                <i class="fas fa-envelope"></i>
-                                Email Address *
-                            </label>
-                            <input type="email" id="editUserEmail" value="${user.email}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editUserPhone">
-                                <i class="fas fa-phone"></i>
-                                Phone Number
-                            </label>
-                            <input type="tel" id="editUserPhone" value="${user.phone || ''}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editUserStatus">
-                                <i class="fas fa-toggle-on"></i>
-                                Status
-                            </label>
-                            <select id="editUserStatus">
-                                <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
-                                <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editUserRole">
-                                <i class="fas fa-user-tag"></i>
-                                Role
-                            </label>
-                            <select id="editUserRole">
-                                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
-                                <option value="premium" ${user.role === 'premium' ? 'selected' : ''}>Premium User</option>
-                                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editUserPassword">
-                                <i class="fas fa-lock"></i>
-                                Reset Password (Leave blank to keep current)
-                            </label>
-                            <input type="password" id="editUserPassword" placeholder="Enter new password">
-                            <small class="form-help">Minimum 6 characters</small>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancelEditUserBtn">
-                                Cancel
-                            </button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i>
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            
-            // Create modal if doesn't exist
+            // Create edit modal if doesn't exist
             let editModal = document.getElementById('editUserModal');
             if (!editModal) {
                 editModal = document.createElement('div');
                 editModal.id = 'editUserModal';
                 editModal.className = 'modal';
-                editModal.innerHTML = modalHTML;
                 document.body.appendChild(editModal);
                 
-                // Add event listeners
+                // Close modal when clicking outside
+                editModal.addEventListener('click', (e) => {
+                    if (e.target === editModal) {
+                        this.hideEditUserModal();
+                    }
+                });
+            }
+            
+            editModal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Edit User: ${this.escapeHtml(user.name)}</h3>
+                        <button class="close-modal" id="closeEditUserModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editUserForm">
+                            <input type="hidden" id="editUserId" value="${this.escapeHtml(user.id)}">
+                            <input type="hidden" id="editUserUID" value="${this.escapeHtml(user.userId)}">
+                            
+                            <div class="form-group">
+                                <label for="editUserName">
+                                    <i class="fas fa-user"></i>
+                                    Full Name *
+                                </label>
+                                <input type="text" id="editUserName" value="${this.escapeHtml(user.name)}" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editUserEmail">
+                                    <i class="fas fa-envelope"></i>
+                                    Email Address *
+                                </label>
+                                <input type="email" id="editUserEmail" value="${this.escapeHtml(user.email)}" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editUserPhone">
+                                    <i class="fas fa-phone"></i>
+                                    Phone Number
+                                </label>
+                                <input type="tel" id="editUserPhone" value="${this.escapeHtml(user.phone || '')}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editUserStatus">
+                                    <i class="fas fa-toggle-on"></i>
+                                    Status
+                                </label>
+                                <select id="editUserStatus">
+                                    <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
+                                    <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editUserRole">
+                                    <i class="fas fa-user-tag"></i>
+                                    Role
+                                </label>
+                                <select id="editUserRole">
+                                    <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                                    <option value="premium" ${user.role === 'premium' ? 'selected' : ''}>Premium User</option>
+                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editUserPassword">
+                                    <i class="fas fa-lock"></i>
+                                    Reset Password (Leave blank to keep current)
+                                </label>
+                                <input type="password" id="editUserPassword" placeholder="Enter new password">
+                                <small class="form-help">Minimum 6 characters</small>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelEditUserBtn">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            setTimeout(() => {
                 document.getElementById('closeEditUserModal').addEventListener('click', () => {
                     this.hideEditUserModal();
                 });
@@ -706,20 +773,11 @@ class UsersManager {
                     this.hideEditUserModal();
                 });
                 
-                document.getElementById('editUserForm').addEventListener('submit', (e) => {
+                document.getElementById('editUserForm').addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    this.updateUser();
+                    await this.updateUser();
                 });
-                
-                // Close modal when clicking outside
-                editModal.addEventListener('click', (e) => {
-                    if (e.target === editModal) {
-                        this.hideEditUserModal();
-                    }
-                });
-            } else {
-                editModal.innerHTML = modalHTML;
-            }
+            }, 100);
             
             this.showEditUserModal();
             
@@ -730,12 +788,14 @@ class UsersManager {
     }
     
     async updateUser() {
+        if (this.isProcessing) return;
+        
         try {
             const userId = document.getElementById('editUserId').value;
             const userUID = document.getElementById('editUserUID').value;
-            const name = document.getElementById('editUserName').value;
-            const email = document.getElementById('editUserEmail').value;
-            const phone = document.getElementById('editUserPhone').value;
+            const name = document.getElementById('editUserName').value.trim();
+            const email = document.getElementById('editUserEmail').value.trim();
+            const phone = document.getElementById('editUserPhone').value.trim();
             const status = document.getElementById('editUserStatus').value;
             const role = document.getElementById('editUserRole').value;
             const password = document.getElementById('editUserPassword').value;
@@ -745,6 +805,14 @@ class UsersManager {
                 this.showMessage('Name and email are required', 'error');
                 return;
             }
+            
+            if (password && password.length < 6) {
+                this.showMessage('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            this.isProcessing = true;
+            this.showMessage('Updating user...', 'info');
             
             // Update data object
             const updateData = {
@@ -756,52 +824,38 @@ class UsersManager {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            // Check if email changed
-            const currentUser = this.users.find(u => u.id === userId);
-            if (currentUser.email !== email) {
-                // Update email in Firebase Auth
-                await this.auth.currentUser.updateEmail(email);
-                
-                // Update email in profile if exists
-                const profileRef = this.db.collection('profiles').doc(userUID);
-                const profileDoc = await profileRef.get();
-                if (profileDoc.exists) {
-                    await profileRef.update({
-                        email: email,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-            }
-            
-            // Update password if provided
-            if (password && password.length >= 6) {
-                await this.auth.currentUser.updatePassword(password);
-            }
-            
             // Update user in Firestore
             await this.db.collection('users').doc(userId).update(updateData);
             
-            // Handle profile status
+            // Handle profile
             const profileRef = this.db.collection('profiles').doc(userUID);
             const profileDoc = await profileRef.get();
             
-            if (status === 'active' && !profileDoc.exists) {
-                // Create profile for activated user
-                await profileRef.set({
-                    userId: userUID,
-                    email: email,
-                    displayName: name,
-                    phone: phone || null,
-                    currency: 'USD',
-                    language: 'en',
-                    country: 'US',
-                    avatarUrl: 'default.png',
-                    status: 'active',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } else if (status === 'inactive' && profileDoc.exists) {
-                // Deactivate profile
+            if (status === 'active') {
+                if (profileDoc.exists) {
+                    await profileRef.update({
+                        displayName: name,
+                        email: email,
+                        phone: phone || null,
+                        status: 'active',
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    await profileRef.set({
+                        userId: userUID,
+                        email: email,
+                        displayName: name,
+                        phone: phone || null,
+                        currency: 'USD',
+                        language: 'en',
+                        country: 'US',
+                        avatarUrl: 'default.png',
+                        status: 'active',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } else if (profileDoc.exists) {
                 await profileRef.update({
                     status: 'inactive',
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -823,11 +877,93 @@ class UsersManager {
         } catch (error) {
             console.error("Error updating user:", error);
             this.showMessage('Error updating user: ' + error.message, 'error');
+        } finally {
+            this.isProcessing = false;
         }
     }
     
-    // ========== NEW: COMPLETE DELETE USER FUNCTION ==========
+    confirmDeleteUser(userId, userName) {
+        // Create confirmation modal
+        const confirmModal = document.createElement('div');
+        confirmModal.id = 'confirmDeleteModal';
+        confirmModal.className = 'modal active';
+        confirmModal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Confirm Delete</h3>
+                    <button class="close-modal" id="closeConfirmDeleteModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="delete-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h4>⚠️ Warning: This action cannot be undone!</h4>
+                        <p>Are you sure you want to delete user <strong>"${this.escapeHtml(userName)}"</strong>?</p>
+                        <p class="text-danger">This will permanently delete:</p>
+                        <ul class="text-danger">
+                            <li>User account (cannot login anymore)</li>
+                            <li>User profile and settings</li>
+                            <li>All income records</li>
+                            <li>All expense records</li>
+                        </ul>
+                        
+                        <div class="form-group">
+                            <label for="confirmUserName">
+                                Type the username to confirm: <strong>"${this.escapeHtml(userName)}"</strong>
+                            </label>
+                            <input type="text" id="confirmUserName" placeholder="Type username here" style="margin-top: 10px;">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled>
+                                <i class="fas fa-trash"></i>
+                                Delete Permanently
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(confirmModal);
+        
+        // Add event listeners
+        setTimeout(() => {
+            const closeBtn = document.getElementById('closeConfirmDeleteModal');
+            const cancelBtn = document.getElementById('cancelDeleteBtn');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            const confirmInput = document.getElementById('confirmUserName');
+            
+            const closeModal = () => {
+                confirmModal.remove();
+            };
+            
+            closeBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+            
+            confirmInput.addEventListener('input', (e) => {
+                confirmBtn.disabled = e.target.value !== userName;
+            });
+            
+            confirmBtn.addEventListener('click', async () => {
+                await this.deleteUser(userId);
+                closeModal();
+            });
+            
+            // Close modal when clicking outside
+            confirmModal.addEventListener('click', (e) => {
+                if (e.target === confirmModal) {
+                    closeModal();
+                }
+            });
+        }, 100);
+    }
+    
     async deleteUser(userId) {
+        if (this.isProcessing) return;
+        
         try {
             const user = this.users.find(u => u.id === userId);
             if (!user) {
@@ -835,113 +971,67 @@ class UsersManager {
                 return;
             }
             
-            const confirmMessage = `
-                Are you sure you want to delete the user "${user.name}"?
-                
-                This will permanently delete:
-                • User account (cannot login anymore)
-                • User profile and settings
-                • All income records
-                • All expense records
-                
-                This action cannot be undone!
-            `;
-            
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-            
-            // Show loading
+            this.isProcessing = true;
             this.showMessage('Deleting user and all associated data...', 'info');
             
-            // Get admin user for re-authentication if needed
-            const currentUser = this.auth.currentUser;
+            // IMPORTANT: In a real app, use Cloud Functions to delete user from Auth
+            // because client-side deletion requires admin privileges
             
-            try {
-                // 1. Delete from Firebase Auth (requires recent login)
-                try {
-                    await this.auth.currentUser.delete();
-                } catch (authError) {
-                    if (authError.code === 'auth/requires-recent-login') {
-                        // Re-authenticate admin user
-                        const password = prompt('Please enter your admin password to confirm user deletion:');
-                        if (!password) {
-                            this.showMessage('Deletion cancelled. Password required.', 'warning');
-                            return;
-                        }
-                        
-                        const credential = firebase.auth.EmailAuthProvider.credential(
-                            currentUser.email, 
-                            password
-                        );
-                        
-                        await currentUser.reauthenticateWithCredential(credential);
-                        await firebase.auth().deleteUser(user.userId);
-                    } else {
-                        throw authError;
-                    }
-                }
-                
-                // 2. Delete all related data from Firestore in batch
-                const batch = this.db.batch();
-                
-                // Delete user document
-                batch.delete(this.db.collection('users').doc(userId));
-                
-                // Delete profile
-                batch.delete(this.db.collection('profiles').doc(user.userId));
-                
-                // Delete incomes
-                const incomesSnapshot = await this.db.collection('incomes')
-                    .where('user_id', '==', user.userId)
-                    .get();
-                
-                incomesSnapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                
-                // Delete expenses
-                const expensesSnapshot = await this.db.collection('expenses')
-                    .where('userId', '==', user.userId)
-                    .get();
-                
-                expensesSnapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                
-                // Commit batch delete
-                await batch.commit();
-                
-                // Show success message
-                this.showMessage(`User "${user.name}" and all associated data deleted successfully!`, 'success');
-                
-                // Refresh data
-                await this.loadUsersData();
-                
-                // Close details modal if open
-                this.hideUserDetailsModal();
-                
-            } catch (error) {
-                console.error("Error in deletion process:", error);
-                
-                let errorMsg = 'Error deleting user: ';
-                switch (error.code) {
-                    case 'auth/wrong-password':
-                        errorMsg = 'Incorrect admin password. Deletion cancelled.';
-                        break;
-                    case 'permission-denied':
-                        errorMsg = 'You do not have permission to delete users.';
-                        break;
-                    default:
-                        errorMsg += error.message;
-                }
-                
-                this.showMessage(errorMsg, 'error');
-            }
+            // Delete all related data from Firestore
+            const batch = this.db.batch();
+            
+            // Delete user document
+            batch.delete(this.db.collection('users').doc(userId));
+            
+            // Delete profile
+            const profileRef = this.db.collection('profiles').doc(user.userId);
+            batch.delete(profileRef);
+            
+            // Delete incomes
+            const incomesSnapshot = await this.db.collection('incomes')
+                .where('user_id', '==', user.userId)
+                .get();
+            
+            incomesSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            
+            // Delete expenses
+            const expensesSnapshot = await this.db.collection('expenses')
+                .where('userId', '==', user.userId)
+                .get();
+            
+            expensesSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            
+            // Commit batch delete
+            await batch.commit();
+            
+            // Show success message
+            this.showMessage(`User "${user.name}" and all associated data deleted successfully!`, 'success');
+            
+            // Note: User will still exist in Firebase Auth
+            // You need Cloud Functions to delete from Auth
+            
+            // Refresh data
+            await this.loadUsersData();
             
         } catch (error) {
             console.error("Error deleting user:", error);
-            this.showMessage('Error deleting user: ' + error.message, 'error');
+            
+            let errorMsg = 'Error deleting user: ';
+            switch (error.code) {
+                case 'permission-denied':
+                    errorMsg = 'You do not have permission to delete users.';
+                    break;
+                default:
+                    errorMsg += error.message;
+            }
+            
+            this.showMessage(errorMsg, 'error');
+        } finally {
+            this.isProcessing = false;
         }
     }
     
@@ -955,21 +1045,23 @@ class UsersManager {
             }
             
             // Load additional user data
-            const incomesSnapshot = await this.db.collection('incomes')
-                .where('user_id', '==', user.userId)
-                .orderBy('date', 'desc')
-                .limit(10)
-                .get();
-            
-            const expensesSnapshot = await this.db.collection('expenses')
-                .where('userId', '==', user.userId)
-                .orderBy('date', 'desc')
-                .limit(10)
-                .get();
-            
-            const profileSnapshot = await this.db.collection('profiles')
-                .doc(user.userId)
-                .get();
+            const [incomesSnapshot, expensesSnapshot, profileSnapshot] = await Promise.all([
+                this.db.collection('incomes')
+                    .where('user_id', '==', user.userId)
+                    .orderBy('date', 'desc')
+                    .limit(10)
+                    .get(),
+                
+                this.db.collection('expenses')
+                    .where('userId', '==', user.userId)
+                    .orderBy('date', 'desc')
+                    .limit(10)
+                    .get(),
+                
+                this.db.collection('profiles')
+                    .doc(user.userId)
+                    .get()
+            ]);
             
             // Format data for display
             const incomes = incomesSnapshot.docs.map(doc => ({
@@ -996,50 +1088,25 @@ class UsersManager {
             
             // Add event listeners to modal buttons
             setTimeout(() => {
-                // Edit profile button
-                const editProfileBtn = document.getElementById('editProfileBtn');
-                if (editProfileBtn) {
-                    editProfileBtn.addEventListener('click', () => {
-                        this.editUserProfile(user.id);
-                    });
-                }
-                
-                // Edit user button
                 const editUserBtn = document.getElementById('editUserBtn');
                 if (editUserBtn) {
                     editUserBtn.addEventListener('click', () => {
                         this.editUser(user.id);
+                        this.hideUserDetailsModal();
                     });
                 }
                 
-                // Reset password button
-                const resetPasswordBtn = document.getElementById('resetPasswordBtn');
-                if (resetPasswordBtn) {
-                    resetPasswordBtn.addEventListener('click', () => {
-                        this.resetUserPassword(user.id, user.email);
-                    });
-                }
-                
-                // Delete user button
                 const deleteUserBtn = document.getElementById('deleteUserBtn');
                 if (deleteUserBtn) {
                     deleteUserBtn.addEventListener('click', () => {
-                        this.deleteUser(user.id);
+                        this.confirmDeleteUser(user.id, user.name);
+                        this.hideUserDetailsModal();
                     });
                 }
                 
-                // Toggle status button
-                const toggleStatusBtn = document.getElementById('toggleStatusBtn');
-                if (toggleStatusBtn) {
-                    toggleStatusBtn.addEventListener('click', () => {
-                        this.toggleUserStatus(user.id, user.profileStatus);
-                    });
-                }
-                
-                // View all transactions buttons
                 document.querySelectorAll('.view-all-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const type = e.target.dataset.type;
+                        const type = e.target.dataset.type || e.target.parentElement.dataset.type;
                         window.open(`${type === 'income' ? 'incomes' : 'expenses'}.html?userId=${user.userId}`, '_blank');
                     });
                 });
@@ -1052,6 +1119,15 @@ class UsersManager {
     }
     
     createUserDetailsHTML(user, profile, incomes, expenses) {
+        const joinDate = user.createdAt ? user.createdAt.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+        }) : 'Unknown';
+        
+        const balance = user.totalIncome - user.totalExpenses;
+        
         return `
             <div class="user-details-view">
                 <!-- Basic Information -->
@@ -1060,30 +1136,26 @@ class UsersManager {
                     <div class="info-grid">
                         <div class="info-item">
                             <label>Full Name</label>
-                            <span>${user.name}</span>
+                            <span>${this.escapeHtml(user.name)}</span>
                         </div>
                         <div class="info-item">
                             <label>Email</label>
-                            <span>${user.email}</span>
+                            <span>${this.escapeHtml(user.email)}</span>
                         </div>
                         <div class="info-item">
                             <label>Phone</label>
-                            <span>${user.phone || 'Not provided'}</span>
+                            <span>${this.escapeHtml(user.phone || 'Not provided')}</span>
                         </div>
                         <div class="info-item">
                             <label>User ID</label>
-                            <span class="user-id-full">${user.userId}</span>
+                            <span class="user-id-full">${this.escapeHtml(user.userId)}</span>
                         </div>
                         <div class="info-item">
                             <label>Join Date</label>
-                            <span>${user.createdAt?.toDate().toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                            }) || 'Unknown'}</span>
+                            <span>${joinDate}</span>
                         </div>
                         <div class="info-item">
-                            <label>Status</label>
+                            <label>Profile Status</label>
                             <span class="status-badge status-${user.profileStatus}">
                                 ${user.profileStatus}
                             </span>
@@ -1119,8 +1191,8 @@ class UsersManager {
                             <span>${profile.country || 'Not set'}</span>
                         </div>
                         <div class="info-item">
-                            <label>Date Format</label>
-                            <span>${profile.dateFormat || 'dd/MM/yyyy'}</span>
+                            <label>Profile Created</label>
+                            <span>${profile.createdAt?.toDate().toLocaleDateString('en-US') || 'Unknown'}</span>
                         </div>
                         <div class="info-item">
                             <label>Last Updated</label>
@@ -1128,7 +1200,7 @@ class UsersManager {
                         </div>
                     </div>
                 </div>
-                ` : ''}
+                ` : '<div class="details-section"><p class="no-profile">No profile created yet</p></div>'}
                 
                 <!-- Financial Summary -->
                 <div class="details-section">
@@ -1144,8 +1216,8 @@ class UsersManager {
                         </div>
                         <div class="financial-stat">
                             <div class="stat-label">Balance</div>
-                            <div class="stat-value ${user.totalIncome - user.totalExpenses >= 0 ? 'amount-positive' : 'amount-negative'}">
-                                $${(user.totalIncome - user.totalExpenses).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            <div class="stat-value ${balance >= 0 ? 'amount-positive' : 'amount-negative'}">
+                                $${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                         </div>
                     </div>
@@ -1160,23 +1232,27 @@ class UsersManager {
                             <h5>Recent Incomes (${incomes.length})</h5>
                             ${incomes.length > 0 ? `
                             <div class="transaction-list">
-                                ${incomes.map(income => `
-                                <div class="transaction-item">
-                                    <div class="transaction-info">
-                                        <div class="transaction-amount amount-positive">
-                                            $${income.amount?.toLocaleString() || '0'}
-                                        </div>
-                                        <div class="transaction-details">
-                                            <div class="transaction-description">
-                                                ${income.description || 'No description'}
+                                ${incomes.map(income => {
+                                    const date = income.date?.toDate();
+                                    const dateStr = date ? date.toLocaleDateString('en-US') : 'Unknown';
+                                    return `
+                                    <div class="transaction-item">
+                                        <div class="transaction-info">
+                                            <div class="transaction-amount amount-positive">
+                                                $${(income.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </div>
-                                            <div class="transaction-date">
-                                                ${income.date?.toDate().toLocaleDateString('en-US') || 'Unknown date'}
+                                            <div class="transaction-details">
+                                                <div class="transaction-description">
+                                                    ${this.escapeHtml(income.description || 'No description')}
+                                                </div>
+                                                <div class="transaction-date">
+                                                    ${dateStr}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </div>
                             ` : '<p class="no-data">No income records found</p>'}
                             ${incomes.length > 0 ? `
@@ -1190,23 +1266,27 @@ class UsersManager {
                             <h5>Recent Expenses (${expenses.length})</h5>
                             ${expenses.length > 0 ? `
                             <div class="transaction-list">
-                                ${expenses.map(expense => `
-                                <div class="transaction-item">
-                                    <div class="transaction-info">
-                                        <div class="transaction-amount amount-negative">
-                                            $${expense.amount?.toLocaleString() || '0'}
-                                        </div>
-                                        <div class="transaction-details">
-                                            <div class="transaction-description">
-                                                ${expense.category || 'No category'}
+                                ${expenses.map(expense => {
+                                    const date = expense.date?.toDate();
+                                    const dateStr = date ? date.toLocaleDateString('en-US') : 'Unknown';
+                                    return `
+                                    <div class="transaction-item">
+                                        <div class="transaction-info">
+                                            <div class="transaction-amount amount-negative">
+                                                $${(expense.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </div>
-                                            <div class="transaction-date">
-                                                ${expense.date?.toDate().toLocaleDateString('en-US') || 'Unknown date'}
+                                            <div class="transaction-details">
+                                                <div class="transaction-description">
+                                                    ${this.escapeHtml(expense.category || 'No category')}
+                                                </div>
+                                                <div class="transaction-date">
+                                                    ${dateStr}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </div>
                             ` : '<p class="no-data">No expense records found</p>'}
                             ${expenses.length > 0 ? `
@@ -1224,11 +1304,7 @@ class UsersManager {
                         <i class="fas fa-edit"></i>
                         Edit User
                     </button>
-                    <button class="btn btn-secondary" id="resetPasswordBtn">
-                        <i class="fas fa-key"></i>
-                        Reset Password
-                    </button>
-                    <button class="btn btn-warning" id="deleteUserBtn">
+                    <button class="btn btn-danger" id="deleteUserBtn">
                         <i class="fas fa-trash"></i>
                         Delete User
                     </button>
@@ -1237,124 +1313,21 @@ class UsersManager {
         `;
     }
     
-    async editUserProfile(userId) {
-        try {
-            const user = this.users.find(u => u.id === userId);
-            if (!user) {
-                this.showMessage('User not found', 'error');
-                return;
-            }
-            
-            // Redirect to profiles page with user ID
-            window.open(`profiles.html?userId=${user.userId}`, '_blank');
-            
-        } catch (error) {
-            console.error("Error editing user profile:", error);
-            this.showMessage('Error: ' + error.message, 'error');
-        }
-    }
-    
-    async resetUserPassword(userId, email) {
-        try {
-            const newPassword = prompt('Enter new password for ' + email + ' (min 6 characters):');
-            
-            if (!newPassword) {
-                this.showMessage('Password reset cancelled', 'info');
-                return;
-            }
-            
-            if (newPassword.length < 6) {
-                this.showMessage('Password must be at least 6 characters', 'error');
-                return;
-            }
-            
-            // Show loading
-            this.showMessage('Resetting password...', 'info');
-            
-            // Get the user from Firebase Auth
-            const userRecord = await this.auth.getUserByEmail(email);
-            
-            // Update password
-            await this.auth.updateUser(userRecord.uid, {
-                password: newPassword
-            });
-            
-            this.showMessage(`Password reset successfully for ${email}`, 'success');
-            
-        } catch (error) {
-            console.error("Error resetting password:", error);
-            this.showMessage('Error resetting password: ' + error.message, 'error');
-        }
-    }
-    
-    async toggleUserStatus(userId, currentStatus) {
-        try {
-            const user = this.users.find(u => u.id === userId);
-            if (!user) {
-                this.showMessage('User not found', 'error');
-                return;
-            }
-            
-            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-            const confirmMessage = `Are you sure you want to ${newStatus === 'active' ? 'activate' : 'deactivate'} ${user.name}?`;
-            
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-            
-            // Update user status
-            if (newStatus === 'active') {
-                // Create profile if activating
-                await this.db.collection('profiles').doc(user.userId).set({
-                    userId: user.userId,
-                    email: user.email,
-                    displayName: user.name,
-                    phone: user.phone || null,
-                    currency: 'USD',
-                    language: 'en',
-                    country: 'US',
-                    avatarUrl: 'default.png',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            } else {
-                // Remove profile if deactivating (or mark as inactive)
-                await this.db.collection('profiles').doc(user.userId).update({
-                    status: 'inactive',
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-            
-            // Update user document
-            await this.db.collection('users').doc(userId).update({
-                status: newStatus === 'active' ? 'active' : 'inactive',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            this.showMessage(`User ${user.name} ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`, 'success');
-            
-            // Refresh data
-            await this.loadUsersData();
-            
-            // Close details modal if open
-            this.hideUserDetailsModal();
-            
-        } catch (error) {
-            console.error("Error toggling user status:", error);
-            this.showMessage('Error updating user status: ' + error.message, 'error');
-        }
-    }
-    
     exportUsersData() {
         try {
+            if (this.filteredUsers.length === 0) {
+                this.showMessage('No data to export', 'warning');
+                return;
+            }
+            
             // Prepare data for export
             const exportData = this.filteredUsers.map(user => ({
                 'User ID': user.userId,
                 'Name': user.name,
                 'Email': user.email,
                 'Phone': user.phone || 'N/A',
-                'Join Date': user.createdAt?.toDate().toISOString().split('T')[0] || 'N/A',
-                'Status': user.profileStatus,
+                'Join Date': user.createdAt ? user.createdAt.toISOString().split('T')[0] : 'N/A',
+                'Profile Status': user.profileStatus,
                 'Account Status': user.status || 'active',
                 'Role': user.role || 'user',
                 'Total Income': user.totalIncome,
@@ -1369,14 +1342,14 @@ class UsersManager {
                 ...exportData.map(row => 
                     headers.map(header => {
                         const cell = row[header];
-                        return typeof cell === 'string' && cell.includes(',') ? 
-                            `"${cell}"` : cell;
+                        return typeof cell === 'string' && (cell.includes(',') || cell.includes('"')) ? 
+                            `"${cell.replace(/"/g, '""')}"` : cell;
                     }).join(',')
                 )
             ].join('\n');
             
             // Create download link
-            const blob = new Blob([csv], { type: 'text/csv' });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1386,7 +1359,7 @@ class UsersManager {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             
-            this.showMessage('Export completed successfully!', 'success');
+            this.showMessage(`Exported ${exportData.length} users successfully!`, 'success');
             
         } catch (error) {
             console.error("Error exporting data:", error);
@@ -1410,7 +1383,46 @@ class UsersManager {
         }
     }
     
+    cacheData(key, data) {
+        try {
+            const cacheData = {
+                data: data,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(`cache_${key}`, JSON.stringify(cacheData));
+        } catch (error) {
+            console.error('Error caching data:', error);
+        }
+    }
+    
+    getCachedData(key) {
+        try {
+            const cached = sessionStorage.getItem(`cache_${key}`);
+            if (!cached) return null;
+            
+            const cacheData = JSON.parse(cached);
+            // Check if cache is valid (5 minutes)
+            if (Date.now() - cacheData.timestamp > 5 * 60 * 1000) {
+                sessionStorage.removeItem(`cache_${key}`);
+                return null;
+            }
+            
+            return cacheData.data;
+        } catch (error) {
+            console.error('Error getting cached data:', error);
+            return null;
+        }
+    }
+    
     showMessage(message, type = 'info') {
+        // Remove existing messages of same type
+        const existingMessages = document.querySelectorAll(`.message-${type}`);
+        existingMessages.forEach(msg => {
+            if (msg.textContent.includes(message)) {
+                msg.remove();
+            }
+        });
+        
         // Create message element
         const messageDiv = document.createElement('div');
         messageDiv.className = `message message-${type}`;
@@ -1424,7 +1436,11 @@ class UsersManager {
         
         // Add to page
         const container = document.querySelector('.main-content');
-        container.insertBefore(messageDiv, container.firstChild);
+        if (container && container.firstChild) {
+            container.insertBefore(messageDiv, container.firstChild);
+        } else if (container) {
+            container.appendChild(messageDiv);
+        }
         
         // Auto-remove after 5 seconds
         setTimeout(() => {
@@ -1447,8 +1463,8 @@ class UsersManager {
     showError(message) {
         const container = document.querySelector('.main-content');
         if (container) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 50px; color: var(--danger-color);">
+            const errorHTML = `
+                <div style="text-align: center; padding: 50px; color: #dc3545;">
                     <i class="fas fa-exclamation-triangle" style="font-size: 50px; margin-bottom: 20px;"></i>
                     <h2>⚠️ System Error</h2>
                     <p>${message}</p>
@@ -1457,6 +1473,11 @@ class UsersManager {
                     </button>
                 </div>
             `;
+            
+            // Only replace if not already showing error
+            if (!container.innerHTML.includes('System Error')) {
+                container.innerHTML = errorHTML;
+            }
         }
     }
 }
