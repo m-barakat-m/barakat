@@ -56,11 +56,11 @@
                     <p class="error-message" id="errorMessage"></p>
                     <p class="footer-note">
                         <i class="fas fa-shield-alt"></i>
-                        Administrator access only. 
+                        Employee access only. 
                         <br>
                         <small>
-                            Admins are created via Firebase Console.
-                            Contact system administrator for access.
+                            All active employees can login.
+                            Contact system administrator for access issues.
                         </small>
                     </p>
                 </div>
@@ -85,18 +85,18 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
-                    // Check if user is an admin
+                    // Check if user is an active employee
                     const employeeDoc = await db.collection('employees').doc(user.uid).get();
                     
                     if (employeeDoc.exists) {
                         const employeeData = employeeDoc.data();
                         
-                        // Only allow admins to login
-                        if (employeeData.role === 'Admin' && employeeData.status === 'active') {
-                            window.location.href = 'dashboard.html';
-                        } else {
+                        // ✅ ALLOW ALL ACTIVE EMPLOYEES (NOT JUST ADMINS)
+                        if (employeeData.status !== 'active') {
                             await auth.signOut();
-                            showError('Access restricted to administrators only.');
+                            showError('Account is inactive. Contact administrator.');
+                        } else {
+                            window.location.href = 'dashboard.html';
                         }
                     } else {
                         await auth.signOut();
@@ -135,7 +135,7 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const userId = userCredential.user.uid;
                 
-                // Verify admin status
+                // Verify employee status
                 const employeeDoc = await db.collection('employees').doc(userId).get();
                 
                 if (!employeeDoc.exists) {
@@ -146,16 +146,10 @@
                 
                 const employeeData = employeeDoc.data();
                 
-                // STRICT: Only admins can login
-                if (employeeData.role !== 'Admin') {
-                    await auth.signOut();
-                    showError('Access restricted to administrators only.');
-                    return;
-                }
-                
+                // ✅ ALLOW ALL ACTIVE EMPLOYEES (NOT JUST ADMINS)
                 if (employeeData.status !== 'active') {
                     await auth.signOut();
-                    showError('Account is inactive.');
+                    showError('Account is inactive. Contact administrator.');
                     return;
                 }
                 
@@ -203,3 +197,4 @@
     </script>
 </body>
 </html>
+[file content end]
