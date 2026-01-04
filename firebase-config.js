@@ -1,40 +1,45 @@
 
 // Firebase Configuration - Reads from window.CONFIG
-const firebaseConfig = {
-    apiKey: window.CONFIG.FIREBASE_API_KEY,
-    authDomain: window.CONFIG.FIREBASE_AUTH_DOMAIN,
-    projectId: window.CONFIG.FIREBASE_PROJECT_ID,
-    storageBucket: window.CONFIG.FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: window.CONFIG.FIREBASE_MESSAGING_SENDER_ID,
-    appId: window.CONFIG.FIREBASE_APP_ID,
-    measurementId: window.CONFIG.FIREBASE_MEASUREMENT_ID
+const getFirebaseConfig = () => {
+    // Wait for CONFIG to be loaded
+    if (!window.CONFIG) {
+        console.error("❌ CONFIG is not loaded!");
+        
+        // Try to load config manually
+        setTimeout(() => {
+            if (!window.CONFIG) {
+                alert("❌ Error: Config file not loaded!\nPlease refresh the page.");
+            }
+        }, 1000);
+        
+        throw new Error("Config file not loaded. Make sure config.js is loaded before firebase-config.js");
+    }
+    
+    const config = window.CONFIG;
+    
+    // Create Firebase config object
+    const firebaseConfig = {
+        apiKey: config.FIREBASE_API_KEY,
+        authDomain: config.FIREBASE_AUTH_DOMAIN,
+        projectId: config.FIREBASE_PROJECT_ID,
+        storageBucket: config.FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: config.FIREBASE_MESSAGING_SENDER_ID,
+        appId: config.FIREBASE_APP_ID,
+        measurementId: config.FIREBASE_MEASUREMENT_ID
+    };
+    
+    // Validate Firebase config
+    console.group('Firebase Configuration Status');
+    console.log('✅ Project ID:', firebaseConfig.projectId);
+    console.log('✅ Auth Domain:', firebaseConfig.authDomain);
+    console.log('✅ API Key:', firebaseConfig.apiKey.substring(0, 10) + '...');
+    console.groupEnd();
+    
+    return firebaseConfig;
 };
 
-// Make it globally available
+// Initialize and export
+const firebaseConfig = getFirebaseConfig();
 window.firebaseConfig = firebaseConfig;
 
-// Validation check
-(function() {
-    console.group('Firebase Configuration Status');
-    console.log('Project ID:', firebaseConfig.projectId);
-    console.log('Auth Domain:', firebaseConfig.authDomain);
-    
-    // Check if config is using placeholder values
-    const hasPlaceholder = 
-        firebaseConfig.apiKey.includes("your_") ||
-        firebaseConfig.projectId.includes("your-project") ||
-        firebaseConfig.apiKey === "AIzaSyC_your_actual_api_key_from_firebase";
-    
-    if (hasPlaceholder) {
-        console.error('❌ FIREBASE CONFIG HAS PLACEHOLDER VALUES!');
-        console.error('Please update config.js with your actual Firebase values');
-        
-        // Show alert to user
-        setTimeout(() => {
-            alert('⚠️ Firebase configuration is not set!\n\nPlease open config.js file and replace the placeholder values with your actual Firebase credentials from Firebase Console.');
-        }, 1000);
-    } else {
-        console.log('✅ Firebase config loaded successfully');
-    }
-    console.groupEnd();
-})();
+console.log("✅ Firebase config loaded successfully!");
