@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Management - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
+                <div class="brand-text">
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">Users Management</span>
+                </div>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-role" id="userRole">Role</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </button>
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="users.html">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                            <span class="badge" id="usersCount">0</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="employees.html">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employees</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profiles.html">
+                            <i class="fas fa-id-card"></i>
+                            <span>Profiles</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Financial Data</li>
+                    <li>
+                        <a href="incomes.html">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Incomes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="expenses.html">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Expenses</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Categories</li>
+                    <li>
+                        <a href="categories.html">
+                            <i class="fas fa-tags"></i>
+                            <span>Expense Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="income-categories.html">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Income Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="preferences.html">
+                            <i class="fas fa-cog"></i>
+                            <span>Preferences</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>Users Management</h1>
+                    <p>Manage all application users and their data</p>
+                </div>
+                <button class="btn btn-primary" id="addUserBtn">
+                    <i class="fas fa-user-plus"></i>
+                    Add New User
+                </button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Users</h3>
+                        <div class="stat-icon users">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalUsersCount">0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="usersGrowth">0</span> this month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Active Profiles</h3>
+                        <div class="stat-icon active">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="activeProfilesCount">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-percentage"></i>
+                        <span id="profilesPercentage">0%</span> of total users
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Avg. Income</h3>
+                        <div class="stat-icon income">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="avgIncome">$0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-chart-line"></i>
+                        Per user average
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Avg. Expenses</h3>
+                        <div class="stat-icon expenses">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="avgExpenses">$0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-chart-bar"></i>
+                        Per user average
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="filters-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search users by name, email, or phone...">
+                    <button class="btn btn-secondary" id="clearSearchBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="filter-controls">
+                    <select id="statusFilter" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                    
+                    <select id="sortBy" class="filter-select">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="name">Name A-Z</option>
+                        <option value="income">Highest Income</option>
+                    </select>
+                    
+                    <button class="btn btn-secondary" id="exportBtn">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                    
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-redo"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-section">
+                <div class="table-header">
+                    <h3>All Users</h3>
+                    <div class="table-info">
+                        Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> users
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Join Date</th>
+                                <th>Profile Status</th>
+                                <th>Total Income</th>
+                                <th>Total Expenses</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="9" class="loading-row">
+                                    <div class="loading-state">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <p>Loading users data...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="btn btn-secondary" id="prevPageBtn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Previous
+                    </button>
+                    
+                    <div class="page-info">
+                        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                    </div>
+                    
+                    <button class="btn btn-secondary" id="nextPageBtn" disabled>
+                        Next
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <select id="itemsPerPage" class="page-select">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <button class="close-modal" id="closeAddUserModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newUserName">
+                                <i class="fas fa-user"></i>
+                                Full Name *
+                            </label>
+                            <input type="text" id="newUserName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newUserEmail">
+                                <i class="fas fa-envelope"></i>
+                                Email Address *
+                            </label>
+                            <input type="email" id="newUserEmail" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newUserPhone">
+                                <i class="fas fa-phone"></i>
+                                Phone Number
+                            </label>
+                            <input type="tel" id="newUserPhone">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newUserPassword">
+                                <i class="fas fa-lock"></i>
+                                Password *
+                            </label>
+                            <input type="password" id="newUserPassword" required minlength="6">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newUserStatus">
+                            <i class="fas fa-toggle-on"></i>
+                            Status
+                        </label>
+                        <select id="newUserStatus">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelAddUserBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal" id="userDetailsModal">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <h3 id="userDetailsTitle">User Details</h3>
+                <button class="close-modal" id="closeUserDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="users.js"></script>
+</body>
+</html>

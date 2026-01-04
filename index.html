@@ -1,191 +1,236 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول - لوحة التحكم</title>
+    <title>Login - Money Manager Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
 </head>
 <body class="login-page">
     <div class="login-container">
         <div class="login-card">
-            <div class="login-header">
-                <div class="logo">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Money Manager</span>
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <img src="logo_app_96.png" alt="Money Manager Logo" class="app-logo">
+                <div class="app-info">
+                    <h1>Money Manager</h1>
+                    <p>Employee Dashboard</p>
                 </div>
-                <h1>تسجيل دخول الموظفين</h1>
-                <p>أدخل بيانات الدخول للوصول إلى لوحة التحكم</p>
+            </div>
+
+            <div class="login-header">
+                <h2>Employee Login</h2>
+                <p>Enter your credentials to access the dashboard</p>
             </div>
 
             <form id="loginForm">
                 <div class="form-group">
                     <label for="email">
                         <i class="fas fa-envelope"></i>
-                        البريد الإلكتروني
+                        Email Address
                     </label>
                     <input type="email" id="email" required 
-                           placeholder="employee@example.com">
+                           placeholder="employee@company.com">
                 </div>
 
                 <div class="form-group">
                     <label for="password">
                         <i class="fas fa-lock"></i>
-                        كلمة المرور
+                        Password
                     </label>
                     <input type="password" id="password" required 
-                           placeholder="أدخل كلمة المرور">
+                           placeholder="Enter your password">
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block">
+                <button type="submit" class="btn btn-primary btn-block login-btn">
                     <i class="fas fa-sign-in-alt"></i>
-                    تسجيل الدخول
+                    Sign In
                 </button>
 
                 <div class="login-footer">
                     <p class="error-message" id="errorMessage"></p>
-                    <p>للموظفين المسجلين فقط</p>
+                    <p class="footer-note">Authorized employees only</p>
                     
-                    <!-- زر المساعدة السريعة -->
-                    <button type="button" class="btn-help" id="quickHelpBtn" 
-                            style="margin-top: 15px; background: #f8f9fa; border: 1px solid #ddd; padding: 8px 15px; border-radius: 5px; cursor: pointer; width: 100%;">
-                        <i class="fas fa-magic"></i> مساعدة سريعة: إنشاء مدير تجريبي
+                    <!-- Quick Help Button -->
+                    <button type="button" class="btn btn-secondary btn-block" id="quickHelpBtn">
+                        <i class="fas fa-magic"></i> Quick Setup: Create Test Admin
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- ✅ Firebase SDK المتوافق مع المتصفح -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK (Compatibility Version) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
-    <!-- ملفات النظام -->
+    <!-- Configuration and Auth -->
     <script src="firebase-config.js"></script>
-    <script src="auth.js"></script>
     <script>
-        // تهيئة Firebase
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = new AuthSystem();
+        
+        // Check if user is already logged in
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    // Check if user exists in employees collection
+                    const employeeDoc = await firebase.firestore()
+                        .collection('employees')
+                        .doc(user.uid)
+                        .get();
+                    
+                    if (employeeDoc.exists) {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        // User is not an employee, sign them out
+                        await firebase.auth().signOut();
+                        showError('Access denied. You are not registered as an employee.');
+                    }
+                } catch (error) {
+                    console.error('Auth check error:', error);
+                }
+            }
+        });
 
-        // معالجة تسجيل الدخول
+        // Handle login form submission
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
+            const loginBtn = document.querySelector('.login-btn');
             
-            const result = await auth.login(email, password);
+            // Show loading state
+            const originalText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            loginBtn.disabled = true;
+            errorMessage.textContent = '';
             
-            if (result.success) {
+            try {
+                // Sign in with Firebase Auth
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const userId = userCredential.user.uid;
+                
+                // Verify employee exists in employees collection
+                const employeeDoc = await firebase.firestore()
+                    .collection('employees')
+                    .doc(userId)
+                    .get();
+                
+                if (!employeeDoc.exists) {
+                    // User is not an employee
+                    await firebase.auth().signOut();
+                    showError('Access denied. You are not registered as an employee.');
+                    return;
+                }
+                
+                // Login successful, redirect to dashboard
                 window.location.href = 'dashboard.html';
-            } else {
-                errorMessage.textContent = result.error;
+                
+            } catch (error) {
+                let errorMsg = 'Login failed. Please try again.';
+                
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMsg = 'Invalid email or password.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMsg = 'Please enter a valid email address.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMsg = 'This account has been disabled.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMsg = 'Too many failed attempts. Please try again later.';
+                        break;
+                }
+                
+                showError(errorMsg);
+            } finally {
+                // Restore button state
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
             }
         });
 
-        // التحقق من حالة تسجيل الدخول
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                window.location.href = 'dashboard.html';
-            }
-        });
-
-        // زر المساعدة السريعة - إنشاء مدير تجريبي
+        // Quick Help Button - Create Test Admin
         document.getElementById('quickHelpBtn').addEventListener('click', async function() {
             const email = 'admin@moneymanager.com';
             const password = 'Admin@1234';
             const errorMessage = document.getElementById('errorMessage');
             
-            // تغيير نص الزر أثناء التنفيذ
+            // Change button state
             const originalText = this.innerHTML;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
             this.disabled = true;
             
             try {
-                errorMessage.textContent = 'جاري إنشاء حساب المدير...';
+                errorMessage.textContent = 'Creating admin account...';
                 
-                // 1. إنشاء حساب في Authentication
+                // 1. Create auth account
                 const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
                 
-                errorMessage.textContent = 'تم إنشاء الحساب، جاري إضافة البيانات...';
+                errorMessage.textContent = 'Account created, adding employee data...';
                 
-                // 2. إضافة بيانات الموظف في Firestore بنفس الـ UID
+                // 2. Add to employees collection
                 await firebase.firestore().collection('employees').doc(uid).set({
-                    name: 'المدير الرئيسي',
+                    name: 'System Administrator',
                     email: email,
                     phone: '+966501234567',
-                    role: 'مدير',
+                    role: 'Admin',
                     status: 'active',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                errorMessage.textContent = '✅ تم! يتم تسجيل الدخول تلقائياً...';
+                errorMessage.textContent = '✅ Success! Auto-filling credentials...';
                 
-                // 3. ملء الحقول تلقائياً
+                // 3. Auto-fill form
                 document.getElementById('email').value = email;
                 document.getElementById('password').value = password;
                 
-                // 4. تسجيل الدخول تلقائياً بعد 2 ثانية
+                // 4. Auto login after 2 seconds
                 setTimeout(async () => {
                     try {
-                        const result = await auth.login(email, password);
-                        if (result.success) {
-                            window.location.href = 'dashboard.html';
-                        } else {
-                            errorMessage.textContent = 'خطأ في التسجيل التلقائي: ' + result.error;
-                        }
+                        await firebase.auth().signInWithEmailAndPassword(email, password);
+                        window.location.href = 'dashboard.html';
                     } catch (loginError) {
-                        errorMessage.textContent = 'تسجيل الدخول يدوياً بـ: ' + email + ' / ' + password;
+                        errorMessage.textContent = 'Please click "Sign In" button.';
                     }
                     
-                    // إعادة الزر لحالته الأصلية
+                    // Restore button
                     this.innerHTML = originalText;
                     this.disabled = false;
                 }, 2000);
                 
             } catch (error) {
-                // إذا كان الحساب موجوداً بالفعل
                 if (error.code === 'auth/email-already-in-use') {
-                    errorMessage.textContent = '✅ الحساب موجود بالفعل. سجل دخول بـ: ' + email + ' / ' + password;
+                    errorMessage.textContent = '✅ Account already exists. Use: ' + email + ' / ' + password;
                     document.getElementById('email').value = email;
                     document.getElementById('password').value = password;
                 } else {
-                    errorMessage.textContent = 'خطأ: ' + error.message;
+                    errorMessage.textContent = 'Error: ' + error.message;
                 }
                 
-                // إعادة الزر لحالته الأصلية
+                // Restore button
                 this.innerHTML = originalText;
                 this.disabled = false;
             }
         });
 
-        // زر اختباري إضافي في الكونسول
-        console.log('%c🎮 أدوات المطور متاحة!', 'color: #018159; font-size: 14px; font-weight: bold;');
-        console.log('%cلإنشاء مدير سريعاً، افتح Console (F12) والصق:', 'color: #666;');
-        console.log(`
-// كود إنشاء مدير سريع
-async function createAdmin() {
-  try {
-    const user = await firebase.auth().createUserWithEmailAndPassword("admin@test.com", "Test@1234");
-    await firebase.firestore().collection("employees").doc(user.user.uid).set({
-      name: "المدير",
-      email: "admin@test.com",
-      role: "مدير",
-      phone: "0500000000",
-      status: "active"
-    });
-    console.log("✅ تم! سجل دخول بـ admin@test.com / Test@1234");
-  } catch(e) {
-    console.log("الحساب موجود، سجل دخول مباشرة");
-  }
-}
-createAdmin();
-        `);
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Developer tools message
+        console.log('%c🔧 Money Manager Dashboard', 'color: #018159; font-size: 16px; font-weight: bold;');
+        console.log('%cFor development tools, check the console for useful functions.', 'color: #666;');
     </script>
 </body>
 </html>

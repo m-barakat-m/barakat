@@ -1,151 +1,364 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - Money Manager</title>
+    <title>Dashboard - Money Manager Admin</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
+    <!-- Chart.js for statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- شريط التنقل -->
+    <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                <i class="fas fa-chart-line"></i>
-                <span>لوحة التحكم</span>
-                <span class="user-role" id="userRole">جاري التحميل...</span>
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
+                <div class="brand-text">
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">Admin Dashboard</span>
+                </div>
             </div>
             
             <div class="nav-controls">
-                <div class="user-info">
-                    <i class="fas fa-user"></i>
-                    <span id="userName">جاري التحميل...</span>
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-role" id="userRole">Role</span>
+                    </div>
                 </div>
+                <button class="btn btn-secondary" id="notificationsBtn" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notificationCount">0</span>
+                </button>
                 <button class="btn btn-danger" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i>
-                    تسجيل الخروج
+                    Logout
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- المحتوى الرئيسي -->
+    <!-- Main Content -->
     <div class="container">
-        <!-- الإحصائيات -->
-        <div class="stats-grid" id="statsSection">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon users">
-                        <i class="fas fa-users"></i>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalUsers">0</div>
-                <div class="stat-label">إجمالي المستخدمين</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon active">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                </div>
-                <div class="stat-value" id="activeUsers">0</div>
-                <div class="stat-label">مستخدمين نشطين</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon inactive">
-                        <i class="fas fa-user-clock"></i>
-                    </div>
-                </div>
-                <div class="stat-value" id="inactiveUsers">0</div>
-                <div class="stat-label">مستخدمين غير نشطين</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon revenue">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                </div>
-                <div class="stat-value" id="premiumUsers">0</div>
-                <div class="stat-label">مستخدمين Premium</div>
-            </div>
-        </div>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active">
+                        <a href="dashboard.html">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="users.html">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                            <span class="badge" id="usersCount">0</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="employees.html">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employees</span>
+                            <span class="badge" id="employeesCount">0</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profiles.html">
+                            <i class="fas fa-id-card"></i>
+                            <span>Profiles</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Financial Data</li>
+                    <li>
+                        <a href="incomes.html">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Incomes</span>
+                            <span class="badge" id="incomesCount">0</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="expenses.html">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Expenses</span>
+                            <span class="badge" id="expensesCount">0</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Categories</li>
+                    <li>
+                        <a href="categories.html">
+                            <i class="fas fa-tags"></i>
+                            <span>Expense Categories</span>
+                            <span class="badge" id="categoriesCount">0</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="income-categories.html">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Income Categories</span>
+                            <span class="badge" id="incomeCategoriesCount">0</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="preferences.html">
+                            <i class="fas fa-cog"></i>
+                            <span>Preferences</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
-        <!-- أدوات التحكم -->
-        <div class="control-panel">
-            <div class="search-section">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" 
-                           placeholder="ابحث عن مستخدم بالاسم، البريد أو الهاتف">
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Welcome Header -->
+            <div class="welcome-header">
+                <h1>Welcome back, <span id="greetingName">Admin</span></h1>
+                <p class="last-login">Last login: <span id="lastLoginTime">Today at 00:00</span></p>
+            </div>
+
+            <!-- Statistics Grid -->
+            <div class="stats-grid">
+                <!-- Total Users Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Users</h3>
+                        <div class="stat-icon users">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="statTotalUsers">0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="usersChange">0%</span> from last month
+                    </div>
+                    <a href="users.html" class="stat-link">View all users <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Total Employees Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Employees</h3>
+                        <div class="stat-icon employees">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="statTotalEmployees">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="activeEmployees">0</span> active
+                    </div>
+                    <a href="employees.html" class="stat-link">Manage employees <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Total Income Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Income</h3>
+                        <div class="stat-icon income">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="statTotalIncome">$0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="incomeChange">0%</span> this month
+                    </div>
+                    <a href="incomes.html" class="stat-link">View income reports <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Total Expenses Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Expenses</h3>
+                        <div class="stat-icon expenses">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="statTotalExpenses">$0</div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        <span id="expensesChange">0%</span> this month
+                    </div>
+                    <a href="expenses.html" class="stat-link">View expense reports <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Income vs Expenses (Last 6 Months)</h3>
+                        <select id="chartPeriod" class="chart-select">
+                            <option value="6">Last 6 Months</option>
+                            <option value="3">Last 3 Months</option>
+                            <option value="12">Last 12 Months</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="incomeExpensesChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Top Expense Categories</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="expenseCategoriesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Section -->
+            <div class="activity-section">
+                <div class="section-header">
+                    <h3>Recent Activity</h3>
+                    <button class="btn btn-secondary" id="refreshActivityBtn">
+                        <i class="fas fa-redo"></i> Refresh
+                    </button>
                 </div>
                 
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="addUserBtn">
-                        <i class="fas fa-plus"></i>
-                        إضافة مستخدم
+                <div class="activity-tabs">
+                    <button class="tab-btn active" data-tab="recent-users">New Users</button>
+                    <button class="tab-btn" data-tab="recent-incomes">Recent Incomes</button>
+                    <button class="tab-btn" data-tab="recent-expenses">Recent Expenses</button>
+                </div>
+
+                <div class="activity-content">
+                    <!-- Recent Users Table -->
+                    <div class="tab-content active" id="recent-users">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Join Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentUsersTable">
+                                    <tr>
+                                        <td colspan="4" class="loading-row">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Recent Incomes Table -->
+                    <div class="tab-content" id="recent-incomes">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Category</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentIncomesTable">
+                                    <tr>
+                                        <td colspan="4" class="loading-row">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Recent Expenses Table -->
+                    <div class="tab-content" id="recent-expenses">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Category</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentExpensesTable">
+                                    <tr>
+                                        <td colspan="4" class="loading-row">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="actions-grid">
+                    <button class="action-card" id="addUserBtn">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add New User</span>
                     </button>
-                    <button class="btn btn-secondary" id="refreshBtn">
-                        <i class="fas fa-redo"></i>
-                        تحديث
+                    <button class="action-card" id="addEmployeeBtn">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Add Employee</span>
+                    </button>
+                    <button class="action-card" id="addIncomeBtn">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Record Income</span>
+                    </button>
+                    <button class="action-card" id="addExpenseBtn">
+                        <i class="fas fa-receipt"></i>
+                        <span>Record Expense</span>
+                    </button>
+                    <button class="action-card" id="generateReportBtn">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Generate Report</span>
+                    </button>
+                    <button class="action-card" id="systemSettingsBtn">
+                        <i class="fas fa-cogs"></i>
+                        <span>System Settings</span>
                     </button>
                 </div>
             </div>
-        </div>
+        </main>
+    </div>
 
-        <!-- جدول المستخدمين -->
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>الاسم</th>
-                        <th>البريد الإلكتروني</th>
-                        <th>رقم الهاتف</th>
-                        <th>الحالة</th>
-                        <th>الباقة</th>
-                        <th>تاريخ التسجيل</th>
-                        <th>الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTable">
-                    <!-- رسالة التحميل -->
-                    <tr id="loadingRow">
-                        <td colspan="8" style="text-align: center; padding: 40px;">
-                            <div class="loading-message">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <p>جاري تحميل البيانات...</p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- زر إضافة بيانات تجريبية -->
-        <div style="text-align: center; margin-top: 20px;">
-            <button class="btn btn-warning" id="addSampleDataBtn" style="display: none;">
-                <i class="fas fa-magic"></i> إضافة بيانات تجريبية للاختبار
+    <!-- Notifications Panel -->
+    <div class="notifications-panel" id="notificationsPanel">
+        <div class="notifications-header">
+            <h3>Notifications</h3>
+            <button class="close-notifications" id="closeNotificationsBtn">
+                <i class="fas fa-times"></i>
             </button>
+        </div>
+        <div class="notifications-list" id="notificationsList">
+            <div class="notification-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>No notifications yet</p>
+            </div>
         </div>
     </div>
 
-    <!-- ✅ ✅ ✅ روابط Firebase الصحيحة -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
+    <!-- App Scripts -->
     <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
     <script src="dashboard.js"></script>
-    
-    <!-- ✅ كود اختبار فقط بدون تهيئة -->
-    <script>
-        console.log("🔍 صفحة لوحة التحكم محملة");
-        console.log("Firebase محمل؟", typeof firebase !== 'undefined' ? '✅' : '❌');
-    </script>
 </body>
 </html>

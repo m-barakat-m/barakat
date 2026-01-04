@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profiles - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
+                <div class="brand-text">
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">User Profiles</span>
+                </div>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-role" id="userRole">Role</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </button>
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="users.html">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="employees.html">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employees</span>
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="profiles.html">
+                            <i class="fas fa-id-card"></i>
+                            <span>Profiles</span>
+                            <span class="badge" id="profilesCount">0</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Financial Data</li>
+                    <li>
+                        <a href="incomes.html">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Incomes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="expenses.html">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Expenses</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Categories</li>
+                    <li>
+                        <a href="categories.html">
+                            <i class="fas fa-tags"></i>
+                            <span>Expense Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="income-categories.html">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Income Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="preferences.html">
+                            <i class="fas fa-cog"></i>
+                            <span>Preferences</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>User Profiles</h1>
+                    <p>Manage user profile information and settings</p>
+                </div>
+                <button class="btn btn-secondary" id="bulkUpdateBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    Bulk Update
+                </button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Profiles</h3>
+                        <div class="stat-icon total">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalProfilesCount">0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="profilesGrowth">0%</span> completion rate
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Countries</h3>
+                        <div class="stat-icon countries">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="countriesCount">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="topCountry">-</span> is top
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Currencies</h3>
+                        <div class="stat-icon currencies">
+                            <i class="fas fa-money-bill"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="currenciesCount">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-chart-pie"></i>
+                        <span id="topCurrency">USD</span> most used
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Languages</h3>
+                        <div class="stat-icon languages">
+                            <i class="fas fa-language"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="languagesCount">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-comments"></i>
+                        <span id="topLanguage">en</span> is default
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distribution Charts -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Country Distribution</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="countryChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Currency Usage</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="currencyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Completion Section -->
+            <div class="completion-section">
+                <div class="section-header">
+                    <h3>Profile Completion Analysis</h3>
+                    <button class="btn btn-secondary" id="refreshCompletionBtn">
+                        <i class="fas fa-redo"></i> Refresh
+                    </button>
+                </div>
+                
+                <div class="completion-grid">
+                    <div class="completion-card">
+                        <div class="completion-header">
+                            <h4>Basic Info</h4>
+                            <span class="completion-percentage" id="basicCompletion">0%</span>
+                        </div>
+                        <div class="completion-bar">
+                            <div class="completion-fill" id="basicFill" style="width: 0%"></div>
+                        </div>
+                        <div class="completion-details">
+                            <span>Name, Email, Phone completed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="completion-card">
+                        <div class="completion-header">
+                            <h4>Location Info</h4>
+                            <span class="completion-percentage" id="locationCompletion">0%</span>
+                        </div>
+                        <div class="completion-bar">
+                            <div class="completion-fill" id="locationFill" style="width: 0%"></div>
+                        </div>
+                        <div class="completion-details">
+                            <span>Country, City, Address provided</span>
+                        </div>
+                    </div>
+                    
+                    <div class="completion-card">
+                        <div class="completion-header">
+                            <h4>Preferences</h4>
+                            <span class="completion-percentage" id="preferencesCompletion">0%</span>
+                        </div>
+                        <div class="completion-bar">
+                            <div class="completion-fill" id="preferencesFill" style="width: 0%"></div>
+                        </div>
+                        <div class="completion-details">
+                            <span>Currency, Language, Date Format set</span>
+                        </div>
+                    </div>
+                    
+                    <div class="completion-card">
+                        <div class="completion-header">
+                            <h4>Additional Info</h4>
+                            <span class="completion-percentage" id="additionalCompletion">0%</span>
+                        </div>
+                        <div class="completion-bar">
+                            <div class="completion-fill" id="additionalFill" style="width: 0%"></div>
+                        </div>
+                        <div class="completion-details">
+                            <span>Bio, Age, Gender, Avatar set</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="filters-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search profiles by name, email, or country...">
+                    <button class="btn btn-secondary" id="clearSearchBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="filter-controls">
+                    <select id="countryFilter" class="filter-select">
+                        <option value="all">All Countries</option>
+                        <!-- Countries will be loaded dynamically -->
+                    </select>
+                    
+                    <select id="currencyFilter" class="filter-select">
+                        <option value="all">All Currencies</option>
+                        <!-- Currencies will be loaded dynamically -->
+                    </select>
+                    
+                    <select id="languageFilter" class="filter-select">
+                        <option value="all">All Languages</option>
+                        <!-- Languages will be loaded dynamically -->
+                    </select>
+                    
+                    <select id="completionFilter" class="filter-select">
+                        <option value="all">All Completion Levels</option>
+                        <option value="high">High (75-100%)</option>
+                        <option value="medium">Medium (50-74%)</option>
+                        <option value="low">Low (0-49%)</option>
+                    </select>
+                    
+                    <button class="btn btn-secondary" id="exportBtn">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                    
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-redo"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profiles Table -->
+            <div class="table-section">
+                <div class="table-header">
+                    <h3>User Profiles</h3>
+                    <div class="table-info">
+                        Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> profiles
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Country</th>
+                                <th>Currency</th>
+                                <th>Language</th>
+                                <th>Date Format</th>
+                                <th>Avatar</th>
+                                <th>Completion</th>
+                                <th>Last Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profilesTableBody">
+                            <tr>
+                                <td colspan="9" class="loading-row">
+                                    <div class="loading-state">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <p>Loading profiles data...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="btn btn-secondary" id="prevPageBtn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Previous
+                    </button>
+                    
+                    <div class="page-info">
+                        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                    </div>
+                    
+                    <button class="btn btn-secondary" id="nextPageBtn" disabled>
+                        Next
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <select id="itemsPerPage" class="page-select">
+                        <option value="15">15 per page</option>
+                        <option value="30">30 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Profile Details Modal -->
+    <div class="modal" id="profileDetailsModal">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <h3 id="profileDetailsTitle">Profile Details</h3>
+                <button class="close-modal" id="closeProfileDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="profileDetailsContent">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Update Modal -->
+    <div class="modal" id="bulkUpdateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Bulk Update Profiles</h3>
+                <button class="close-modal" id="closeBulkUpdateModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="bulkUpdateForm">
+                    <div class="form-group">
+                        <label for="bulkUpdateField">
+                            <i class="fas fa-cog"></i>
+                            Field to Update
+                        </label>
+                        <select id="bulkUpdateField" required>
+                            <option value="">Select Field</option>
+                            <option value="currency">Currency</option>
+                            <option value="language">Language</option>
+                            <option value="dateFormat">Date Format</option>
+                            <option value="country">Country</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bulkUpdateValue">
+                            <i class="fas fa-pen"></i>
+                            New Value
+                        </label>
+                        <div id="bulkValueContainer">
+                            <!-- Dynamic input based on selected field -->
+                            <input type="text" id="bulkUpdateValue" required placeholder="Enter new value">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bulkUpdateFilter">
+                            <i class="fas fa-filter"></i>
+                            Apply to Profiles
+                        </label>
+                        <select id="bulkUpdateFilter">
+                            <option value="all">All Profiles</option>
+                            <option value="selected">Selected Profiles Only</option>
+                            <option value="filtered">Currently Filtered Profiles</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelBulkUpdateBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i>
+                            Update Profiles
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="profiles.js"></script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incomes Management - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
+                <div class="brand-text">
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">Incomes Management</span>
+                </div>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-role" id="userRole">Role</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </button>
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="users.html">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="employees.html">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employees</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profiles.html">
+                            <i class="fas fa-id-card"></i>
+                            <span>Profiles</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Financial Data</li>
+                    <li class="active">
+                        <a href="incomes.html">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Incomes</span>
+                            <span class="badge" id="incomesCount">0</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="expenses.html">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Expenses</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Categories</li>
+                    <li>
+                        <a href="categories.html">
+                            <i class="fas fa-tags"></i>
+                            <span>Expense Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="income-categories.html">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Income Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="preferences.html">
+                            <i class="fas fa-cog"></i>
+                            <span>Preferences</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>Incomes Management</h1>
+                    <p>Track and manage all income records</p>
+                </div>
+                <button class="btn btn-primary" id="addIncomeBtn">
+                    <i class="fas fa-plus-circle"></i>
+                    Add New Income
+                </button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Income</h3>
+                        <div class="stat-icon total">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalIncomeAmount">$0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="incomeGrowth">0%</span> this month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Avg. Income</h3>
+                        <div class="stat-icon avg">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="avgIncomeAmount">$0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-calculator"></i>
+                        Per transaction
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Transactions</h3>
+                        <div class="stat-icon transactions">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalTransactions">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-calendar"></i>
+                        <span id="todayTransactions">0</span> today
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Top Category</h3>
+                        <div class="stat-icon category">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="topCategory">-</div>
+                    <div class="stat-change">
+                        <i class="fas fa-percentage"></i>
+                        <span id="categoryPercentage">0%</span> of total
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Income Trend (Last 30 Days)</h3>
+                        <select id="trendPeriod" class="chart-select">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="365">Last 365 Days</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="incomeTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Income by Category</h3>
+                        <select id="categoryPeriod" class="chart-select">
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="365">Last Year</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="filters-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search by description, user, or category...">
+                    <button class="btn btn-secondary" id="clearSearchBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="filter-controls">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="all">All Categories</option>
+                        <!-- Categories will be loaded dynamically -->
+                    </select>
+                    
+                    <select id="userFilter" class="filter-select">
+                        <option value="all">All Users</option>
+                        <!-- Users will be loaded dynamically -->
+                    </select>
+                    
+                    <div class="date-range">
+                        <input type="date" id="dateFrom" class="date-input">
+                        <span class="date-separator">to</span>
+                        <input type="date" id="dateTo" class="date-input">
+                    </div>
+                    
+                    <select id="sortBy" class="filter-select">
+                        <option value="date_desc">Newest First</option>
+                        <option value="date_asc">Oldest First</option>
+                        <option value="amount_desc">Highest Amount</option>
+                        <option value="amount_asc">Lowest Amount</option>
+                    </select>
+                    
+                    <button class="btn btn-secondary" id="exportBtn">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                    
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-redo"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Incomes Table -->
+            <div class="table-section">
+                <div class="table-header">
+                    <h3>Income Records</h3>
+                    <div class="table-info">
+                        Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> records
+                        <span class="total-amount" id="tableTotalAmount">Total: $0</span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Amount</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Favorite</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incomesTableBody">
+                            <tr>
+                                <td colspan="8" class="loading-row">
+                                    <div class="loading-state">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <p>Loading income data...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="btn btn-secondary" id="prevPageBtn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Previous
+                    </button>
+                    
+                    <div class="page-info">
+                        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                    </div>
+                    
+                    <button class="btn btn-secondary" id="nextPageBtn" disabled>
+                        Next
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <select id="itemsPerPage" class="page-select">
+                        <option value="20">20 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                        <option value="200">200 per page</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Income Modal -->
+    <div class="modal" id="addIncomeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Income</h3>
+                <button class="close-modal" id="closeAddIncomeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addIncomeForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="incomeAmount">
+                                <i class="fas fa-dollar-sign"></i>
+                                Amount *
+                            </label>
+                            <input type="number" id="incomeAmount" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="incomeDate">
+                                <i class="fas fa-calendar"></i>
+                                Date *
+                            </label>
+                            <input type="date" id="incomeDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="incomeUser">
+                                <i class="fas fa-user"></i>
+                                User *
+                            </label>
+                            <select id="incomeUser" required>
+                                <option value="">Select User</option>
+                                <!-- Users will be loaded dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="incomeCategory">
+                                <i class="fas fa-tag"></i>
+                                Category *
+                            </label>
+                            <select id="incomeCategory" required>
+                                <option value="">Select Category</option>
+                                <!-- Categories will be loaded dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="incomeDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="incomeDescription" rows="3" placeholder="Enter income description..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="incomeFavorite">
+                            <i class="fas fa-star"></i>
+                            Mark as Favorite
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelAddIncomeBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Income
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Income Modal -->
+    <div class="modal" id="editIncomeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Income</h3>
+                <button class="close-modal" id="closeEditIncomeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editIncomeForm">
+                    <input type="hidden" id="editIncomeId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editIncomeAmount">
+                                <i class="fas fa-dollar-sign"></i>
+                                Amount *
+                            </label>
+                            <input type="number" id="editIncomeAmount" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editIncomeDate">
+                                <i class="fas fa-calendar"></i>
+                                Date *
+                            </label>
+                            <input type="date" id="editIncomeDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editIncomeUser">
+                                <i class="fas fa-user"></i>
+                                User *
+                            </label>
+                            <select id="editIncomeUser" required>
+                                <option value="">Select User</option>
+                                <!-- Users will be loaded dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editIncomeCategory">
+                                <i class="fas fa-tag"></i>
+                                Category *
+                            </label>
+                            <select id="editIncomeCategory" required>
+                                <option value="">Select Category</option>
+                                <!-- Categories will be loaded dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editIncomeDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="editIncomeDescription" rows="3" placeholder="Enter income description..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editIncomeFavorite">
+                            <i class="fas fa-star"></i>
+                            Mark as Favorite
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelEditIncomeBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Update Income
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income Details Modal -->
+    <div class="modal" id="incomeDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Income Details</h3>
+                <button class="close-modal" id="closeIncomeDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="incomeDetailsContent">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="incomes.js"></script>
+</body>
+</html>

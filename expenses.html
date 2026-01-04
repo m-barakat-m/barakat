@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses Management - Money Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
+                <div class="brand-text">
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">Expenses Management</span>
+                </div>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-role" id="userRole">Role</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </button>
+                <button class="btn btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="users.html">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="employees.html">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Employees</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profiles.html">
+                            <i class="fas fa-id-card"></i>
+                            <span>Profiles</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Financial Data</li>
+                    <li>
+                        <a href="incomes.html">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Incomes</span>
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="expenses.html">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Expenses</span>
+                            <span class="badge" id="expensesCount">0</span>
+                        </a>
+                    </li>
+                    <li class="section-header">Categories</li>
+                    <li>
+                        <a href="categories.html">
+                            <i class="fas fa-tags"></i>
+                            <span>Expense Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="income-categories.html">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Income Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="preferences.html">
+                            <i class="fas fa-cog"></i>
+                            <span>Preferences</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>Expenses Management</h1>
+                    <p>Track and manage all expense records</p>
+                </div>
+                <button class="btn btn-primary" id="addExpenseBtn">
+                    <i class="fas fa-plus-circle"></i>
+                    Add New Expense
+                </button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Total Expenses</h3>
+                        <div class="stat-icon total">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalExpensesAmount">$0</div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        <span id="expensesChange">0%</span> this month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Avg. Expense</h3>
+                        <div class="stat-icon avg">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="avgExpenseAmount">$0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-chart-line"></i>
+                        Per transaction
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Transactions</h3>
+                        <div class="stat-icon transactions">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalTransactions">0</div>
+                    <div class="stat-change">
+                        <i class="fas fa-calendar"></i>
+                        <span id="todayTransactions">0</span> today
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Top Category</h3>
+                        <div class="stat-icon category">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="topCategory">-</div>
+                    <div class="stat-change">
+                        <i class="fas fa-percentage"></i>
+                        <span id="categoryPercentage">0%</span> of total
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Expenses Trend (Last 30 Days)</h3>
+                        <select id="trendPeriod" class="chart-select">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="365">Last 365 Days</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="expensesTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Expenses by Category</h3>
+                        <select id="categoryPeriod" class="chart-select">
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="365">Last Year</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Section -->
+            <div class="comparison-section">
+                <div class="comparison-header">
+                    <h3>Income vs Expenses Comparison</h3>
+                    <select id="comparisonPeriod" class="chart-select">
+                        <option value="30" selected>Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="365">Last Year</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="filters-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search by description, user, category, or sub-category...">
+                    <button class="btn btn-secondary" id="clearSearchBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="filter-controls">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="all">All Categories</option>
+                        <!-- Categories will be loaded dynamically -->
+                    </select>
+                    
+                    <select id="subCategoryFilter" class="filter-select">
+                        <option value="all">All Sub-Categories</option>
+                        <!-- Sub-categories will be loaded dynamically -->
+                    </select>
+                    
+                    <select id="userFilter" class="filter-select">
+                        <option value="all">All Users</option>
+                        <!-- Users will be loaded dynamically -->
+                    </select>
+                    
+                    <div class="date-range">
+                        <input type="date" id="dateFrom" class="date-input">
+                        <span class="date-separator">to</span>
+                        <input type="date" id="dateTo" class="date-input">
+                    </div>
+                    
+                    <select id="sortBy" class="filter-select">
+                        <option value="date_desc">Newest First</option>
+                        <option value="date_asc">Oldest First</option>
+                        <option value="amount_desc">Highest Amount</option>
+                        <option value="amount_asc">Lowest Amount</option>
+                    </select>
+                    
+                    <button class="btn btn-secondary" id="exportBtn">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                    
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-redo"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Expenses Table -->
+            <div class="table-section">
+                <div class="table-header">
+                    <h3>Expense Records</h3>
+                    <div class="table-info">
+                        Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> records
+                        <span class="total-amount" id="tableTotalAmount">Total: $0</span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Amount</th>
+                                <th>Category</th>
+                                <th>Sub-Category</th>
+                                <th>Description</th>
+                                <th>Favorite</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTableBody">
+                            <tr>
+                                <td colspan="9" class="loading-row">
+                                    <div class="loading-state">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <p>Loading expense data...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="btn btn-secondary" id="prevPageBtn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Previous
+                    </button>
+                    
+                    <div class="page-info">
+                        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                    </div>
+                    
+                    <button class="btn btn-secondary" id="nextPageBtn" disabled>
+                        Next
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <select id="itemsPerPage" class="page-select">
+                        <option value="20">20 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                        <option value="200">200 per page</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div class="modal" id="addExpenseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Expense</h3>
+                <button class="close-modal" id="closeAddExpenseModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addExpenseForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseAmount">
+                                <i class="fas fa-dollar-sign"></i>
+                                Amount *
+                            </label>
+                            <input type="number" id="expenseAmount" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="expenseDate">
+                                <i class="fas fa-calendar"></i>
+                                Date *
+                            </label>
+                            <input type="date" id="expenseDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseUser">
+                                <i class="fas fa-user"></i>
+                                User *
+                            </label>
+                            <select id="expenseUser" required>
+                                <option value="">Select User</option>
+                                <!-- Users will be loaded dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="expenseCategory">
+                                <i class="fas fa-tag"></i>
+                                Category *
+                            </label>
+                            <select id="expenseCategory" required>
+                                <option value="">Select Category</option>
+                                <!-- Categories will be loaded dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseSubCategory">
+                                <i class="fas fa-tags"></i>
+                                Sub-Category
+                            </label>
+                            <select id="expenseSubCategory">
+                                <option value="">Select Sub-Category</option>
+                                <!-- Sub-categories will be loaded dynamically based on selected category -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="expenseCategoryId">
+                                <i class="fas fa-code"></i>
+                                Category ID *
+                            </label>
+                            <input type="text" id="expenseCategoryId" required readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expenseDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="expenseDescription" rows="3" placeholder="Enter expense description..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="expenseFavorite">
+                            <i class="fas fa-star"></i>
+                            Mark as Favorite
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelAddExpenseBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Expense
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Expense Modal -->
+    <div class="modal" id="editExpenseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Expense</h3>
+                <button class="close-modal" id="closeEditExpenseModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editExpenseForm">
+                    <input type="hidden" id="editExpenseId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editExpenseAmount">
+                                <i class="fas fa-dollar-sign"></i>
+                                Amount *
+                            </label>
+                            <input type="number" id="editExpenseAmount" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editExpenseDate">
+                                <i class="fas fa-calendar"></i>
+                                Date *
+                            </label>
+                            <input type="date" id="editExpenseDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editExpenseUser">
+                                <i class="fas fa-user"></i>
+                                User *
+                            </label>
+                            <select id="editExpenseUser" required>
+                                <option value="">Select User</option>
+                                <!-- Users will be loaded dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editExpenseCategory">
+                                <i class="fas fa-tag"></i>
+                                Category *
+                            </label>
+                            <select id="editExpenseCategory" required>
+                                <option value="">Select Category</option>
+                                <!-- Categories will be loaded dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editExpenseSubCategory">
+                                <i class="fas fa-tags"></i>
+                                Sub-Category
+                            </label>
+                            <select id="editExpenseSubCategory">
+                                <option value="">Select Sub-Category</option>
+                                <!-- Sub-categories will be loaded dynamically based on selected category -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editExpenseCategoryId">
+                                <i class="fas fa-code"></i>
+                                Category ID *
+                            </label>
+                            <input type="text" id="editExpenseCategoryId" required readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editExpenseDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="editExpenseDescription" rows="3" placeholder="Enter expense description..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editExpenseFavorite">
+                            <i class="fas fa-star"></i>
+                            Mark as Favorite
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelEditExpenseBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Update Expense
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Details Modal -->
+    <div class="modal" id="expenseDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Expense Details</h3>
+                <button class="close-modal" id="closeExpenseDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="expenseDetailsContent">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="expenses.js"></script>
+</body>
+</html>

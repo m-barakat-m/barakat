@@ -1,4 +1,4 @@
-// إعدادات Firebase الخاصة بمشروعك
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyD9763GBD2mjYp3RGf4ZWwjsf5qAnheXHM",
   authDomain: "money-manager-9e9ca.firebaseapp.com",

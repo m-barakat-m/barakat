@@ -1,28 +1,10 @@
-/* main.css */
 
-/* استدعاء ملفات CSS أخرى */
 @import url("main.css");
 @import url("index.css");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
-@import url("");
+@import url("dasboard.css");
+@import url("employees.css");
+@import url("incomes.css");
+@import url("login.css");
+@import url("Notifications.css");
+@import url("profiles.css");
 
-/* لا توجد قواعد CSS أخرى هنا */
