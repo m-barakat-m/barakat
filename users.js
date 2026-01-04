@@ -1,4 +1,4 @@
-// Users Management System
+// Users Management System - COMPLETE VERSION
 class UsersManager {
     constructor() {
         this.users = [];
@@ -137,14 +137,28 @@ class UsersManager {
             this.hideUserDetailsModal();
         });
         
+        document.getElementById('closeEditUserModal').addEventListener('click', () => {
+            this.hideEditUserModal();
+        });
+        
         document.getElementById('cancelAddUserBtn').addEventListener('click', () => {
             this.hideAddUserModal();
+        });
+        
+        document.getElementById('cancelEditUserBtn').addEventListener('click', () => {
+            this.hideEditUserModal();
         });
         
         // Add user form
         document.getElementById('addUserForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.addNewUser();
+        });
+        
+        // Edit user form
+        document.getElementById('editUserForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.updateUser();
         });
         
         // Close modals when clicking outside
@@ -222,7 +236,9 @@ class UsersManager {
                     totalIncome: totalIncome,
                     totalExpenses: totalExpenses,
                     hasProfile: !!profile,
-                    profileData: profile
+                    profileData: profile,
+                    status: userData.status || 'active',
+                    role: userData.role || 'user'
                 };
                 
                 this.users.push(user);
@@ -278,6 +294,7 @@ class UsersManager {
         // Update UI
         document.getElementById('totalUsersCount').textContent = totalUsers.toLocaleString();
         document.getElementById('usersCount').textContent = totalUsers;
+        
         document.getElementById('usersGrowth').textContent = usersThisMonth;
         
         document.getElementById('activeProfilesCount').textContent = activeProfiles.toLocaleString();
@@ -486,6 +503,14 @@ class UsersManager {
         document.getElementById('addUserModal').classList.remove('active');
     }
     
+    showEditUserModal() {
+        document.getElementById('editUserModal').classList.add('active');
+    }
+    
+    hideEditUserModal() {
+        document.getElementById('editUserModal').classList.remove('active');
+    }
+    
     showUserDetailsModal() {
         document.getElementById('userDetailsModal').classList.add('active');
     }
@@ -574,6 +599,352 @@ class UsersManager {
         }
     }
     
+    // ========== NEW: COMPLETE EDIT USER FUNCTION ==========
+    async editUser(userId) {
+        try {
+            const user = this.users.find(u => u.id === userId);
+            if (!user) {
+                this.showMessage('User not found', 'error');
+                return;
+            }
+            
+            // Create and show edit modal
+            const modalHTML = `
+                <div class="modal-header">
+                    <h3>Edit User: ${user.name}</h3>
+                    <button class="close-modal" id="closeEditUserModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId" value="${user.id}">
+                        <input type="hidden" id="editUserUID" value="${user.userId}">
+                        
+                        <div class="form-group">
+                            <label for="editUserName">
+                                <i class="fas fa-user"></i>
+                                Full Name *
+                            </label>
+                            <input type="text" id="editUserName" value="${user.name}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editUserEmail">
+                                <i class="fas fa-envelope"></i>
+                                Email Address *
+                            </label>
+                            <input type="email" id="editUserEmail" value="${user.email}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editUserPhone">
+                                <i class="fas fa-phone"></i>
+                                Phone Number
+                            </label>
+                            <input type="tel" id="editUserPhone" value="${user.phone || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editUserStatus">
+                                <i class="fas fa-toggle-on"></i>
+                                Status
+                            </label>
+                            <select id="editUserStatus">
+                                <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editUserRole">
+                                <i class="fas fa-user-tag"></i>
+                                Role
+                            </label>
+                            <select id="editUserRole">
+                                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                                <option value="premium" ${user.role === 'premium' ? 'selected' : ''}>Premium User</option>
+                                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editUserPassword">
+                                <i class="fas fa-lock"></i>
+                                Reset Password (Leave blank to keep current)
+                            </label>
+                            <input type="password" id="editUserPassword" placeholder="Enter new password">
+                            <small class="form-help">Minimum 6 characters</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelEditUserBtn">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Create modal if doesn't exist
+            let editModal = document.getElementById('editUserModal');
+            if (!editModal) {
+                editModal = document.createElement('div');
+                editModal.id = 'editUserModal';
+                editModal.className = 'modal';
+                editModal.innerHTML = modalHTML;
+                document.body.appendChild(editModal);
+                
+                // Add event listeners
+                document.getElementById('closeEditUserModal').addEventListener('click', () => {
+                    this.hideEditUserModal();
+                });
+                
+                document.getElementById('cancelEditUserBtn').addEventListener('click', () => {
+                    this.hideEditUserModal();
+                });
+                
+                document.getElementById('editUserForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.updateUser();
+                });
+                
+                // Close modal when clicking outside
+                editModal.addEventListener('click', (e) => {
+                    if (e.target === editModal) {
+                        this.hideEditUserModal();
+                    }
+                });
+            } else {
+                editModal.innerHTML = modalHTML;
+            }
+            
+            this.showEditUserModal();
+            
+        } catch (error) {
+            console.error("Error preparing user edit:", error);
+            this.showMessage('Error loading user data: ' + error.message, 'error');
+        }
+    }
+    
+    async updateUser() {
+        try {
+            const userId = document.getElementById('editUserId').value;
+            const userUID = document.getElementById('editUserUID').value;
+            const name = document.getElementById('editUserName').value;
+            const email = document.getElementById('editUserEmail').value;
+            const phone = document.getElementById('editUserPhone').value;
+            const status = document.getElementById('editUserStatus').value;
+            const role = document.getElementById('editUserRole').value;
+            const password = document.getElementById('editUserPassword').value;
+            
+            // Validate inputs
+            if (!name || !email) {
+                this.showMessage('Name and email are required', 'error');
+                return;
+            }
+            
+            // Update data object
+            const updateData = {
+                name: name,
+                email: email,
+                phone: phone || null,
+                status: status,
+                role: role,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Check if email changed
+            const currentUser = this.users.find(u => u.id === userId);
+            if (currentUser.email !== email) {
+                // Update email in Firebase Auth
+                await this.auth.currentUser.updateEmail(email);
+                
+                // Update email in profile if exists
+                const profileRef = this.db.collection('profiles').doc(userUID);
+                const profileDoc = await profileRef.get();
+                if (profileDoc.exists) {
+                    await profileRef.update({
+                        email: email,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            }
+            
+            // Update password if provided
+            if (password && password.length >= 6) {
+                await this.auth.currentUser.updatePassword(password);
+            }
+            
+            // Update user in Firestore
+            await this.db.collection('users').doc(userId).update(updateData);
+            
+            // Handle profile status
+            const profileRef = this.db.collection('profiles').doc(userUID);
+            const profileDoc = await profileRef.get();
+            
+            if (status === 'active' && !profileDoc.exists) {
+                // Create profile for activated user
+                await profileRef.set({
+                    userId: userUID,
+                    email: email,
+                    displayName: name,
+                    phone: phone || null,
+                    currency: 'USD',
+                    language: 'en',
+                    country: 'US',
+                    avatarUrl: 'default.png',
+                    status: 'active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } else if (status === 'inactive' && profileDoc.exists) {
+                // Deactivate profile
+                await profileRef.update({
+                    status: 'inactive',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            // Show success message
+            this.showMessage(`User ${name} updated successfully!`, 'success');
+            
+            // Close modal
+            this.hideEditUserModal();
+            
+            // Refresh data
+            await this.loadUsersData();
+            
+            // Close details modal if open
+            this.hideUserDetailsModal();
+            
+        } catch (error) {
+            console.error("Error updating user:", error);
+            this.showMessage('Error updating user: ' + error.message, 'error');
+        }
+    }
+    
+    // ========== NEW: COMPLETE DELETE USER FUNCTION ==========
+    async deleteUser(userId) {
+        try {
+            const user = this.users.find(u => u.id === userId);
+            if (!user) {
+                this.showMessage('User not found', 'error');
+                return;
+            }
+            
+            const confirmMessage = `
+                Are you sure you want to delete the user "${user.name}"?
+                
+                This will permanently delete:
+                • User account (cannot login anymore)
+                • User profile and settings
+                • All income records
+                • All expense records
+                
+                This action cannot be undone!
+            `;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Show loading
+            this.showMessage('Deleting user and all associated data...', 'info');
+            
+            // Get admin user for re-authentication if needed
+            const currentUser = this.auth.currentUser;
+            
+            try {
+                // 1. Delete from Firebase Auth (requires recent login)
+                try {
+                    await this.auth.currentUser.delete();
+                } catch (authError) {
+                    if (authError.code === 'auth/requires-recent-login') {
+                        // Re-authenticate admin user
+                        const password = prompt('Please enter your admin password to confirm user deletion:');
+                        if (!password) {
+                            this.showMessage('Deletion cancelled. Password required.', 'warning');
+                            return;
+                        }
+                        
+                        const credential = firebase.auth.EmailAuthProvider.credential(
+                            currentUser.email, 
+                            password
+                        );
+                        
+                        await currentUser.reauthenticateWithCredential(credential);
+                        await firebase.auth().deleteUser(user.userId);
+                    } else {
+                        throw authError;
+                    }
+                }
+                
+                // 2. Delete all related data from Firestore in batch
+                const batch = this.db.batch();
+                
+                // Delete user document
+                batch.delete(this.db.collection('users').doc(userId));
+                
+                // Delete profile
+                batch.delete(this.db.collection('profiles').doc(user.userId));
+                
+                // Delete incomes
+                const incomesSnapshot = await this.db.collection('incomes')
+                    .where('user_id', '==', user.userId)
+                    .get();
+                
+                incomesSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                // Delete expenses
+                const expensesSnapshot = await this.db.collection('expenses')
+                    .where('userId', '==', user.userId)
+                    .get();
+                
+                expensesSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                // Commit batch delete
+                await batch.commit();
+                
+                // Show success message
+                this.showMessage(`User "${user.name}" and all associated data deleted successfully!`, 'success');
+                
+                // Refresh data
+                await this.loadUsersData();
+                
+                // Close details modal if open
+                this.hideUserDetailsModal();
+                
+            } catch (error) {
+                console.error("Error in deletion process:", error);
+                
+                let errorMsg = 'Error deleting user: ';
+                switch (error.code) {
+                    case 'auth/wrong-password':
+                        errorMsg = 'Incorrect admin password. Deletion cancelled.';
+                        break;
+                    case 'permission-denied':
+                        errorMsg = 'You do not have permission to delete users.';
+                        break;
+                    default:
+                        errorMsg += error.message;
+                }
+                
+                this.showMessage(errorMsg, 'error');
+            }
+            
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            this.showMessage('Error deleting user: ' + error.message, 'error');
+        }
+    }
+    
     async viewUserDetails(userId) {
         try {
             // Find user in our data
@@ -633,11 +1004,27 @@ class UsersManager {
                     });
                 }
                 
+                // Edit user button
+                const editUserBtn = document.getElementById('editUserBtn');
+                if (editUserBtn) {
+                    editUserBtn.addEventListener('click', () => {
+                        this.editUser(user.id);
+                    });
+                }
+                
                 // Reset password button
                 const resetPasswordBtn = document.getElementById('resetPasswordBtn');
                 if (resetPasswordBtn) {
                     resetPasswordBtn.addEventListener('click', () => {
                         this.resetUserPassword(user.id, user.email);
+                    });
+                }
+                
+                // Delete user button
+                const deleteUserBtn = document.getElementById('deleteUserBtn');
+                if (deleteUserBtn) {
+                    deleteUserBtn.addEventListener('click', () => {
+                        this.deleteUser(user.id);
                     });
                 }
                 
@@ -700,6 +1087,16 @@ class UsersManager {
                             <span class="status-badge status-${user.profileStatus}">
                                 ${user.profileStatus}
                             </span>
+                        </div>
+                        <div class="info-item">
+                            <label>Account Status</label>
+                            <span class="status-badge status-${user.status || 'active'}">
+                                ${user.status || 'active'}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <label>Role</label>
+                            <span class="role-badge">${user.role || 'user'}</span>
                         </div>
                     </div>
                 </div>
@@ -823,36 +1220,66 @@ class UsersManager {
                 
                 <!-- Actions -->
                 <div class="details-actions">
-                    <button class="btn btn-secondary" id="editProfileBtn">
+                    <button class="btn btn-primary" id="editUserBtn">
                         <i class="fas fa-edit"></i>
-                        Edit Profile
+                        Edit User
                     </button>
                     <button class="btn btn-secondary" id="resetPasswordBtn">
                         <i class="fas fa-key"></i>
                         Reset Password
                     </button>
-                    <button class="btn ${user.profileStatus === 'active' ? 'btn-warning' : 'btn-primary'}" id="toggleStatusBtn">
-                        <i class="fas fa-toggle-${user.profileStatus === 'active' ? 'off' : 'on'}"></i>
-                        ${user.profileStatus === 'active' ? 'Deactivate' : 'Activate'} User
+                    <button class="btn btn-warning" id="deleteUserBtn">
+                        <i class="fas fa-trash"></i>
+                        Delete User
                     </button>
                 </div>
             </div>
         `;
     }
     
-    editUser(userId) {
-        this.showMessage('Edit feature coming soon!', 'info');
-    }
-    
-    editUserProfile(userId) {
-        this.showMessage('Edit profile feature coming soon!', 'info');
+    async editUserProfile(userId) {
+        try {
+            const user = this.users.find(u => u.id === userId);
+            if (!user) {
+                this.showMessage('User not found', 'error');
+                return;
+            }
+            
+            // Redirect to profiles page with user ID
+            window.open(`profiles.html?userId=${user.userId}`, '_blank');
+            
+        } catch (error) {
+            console.error("Error editing user profile:", error);
+            this.showMessage('Error: ' + error.message, 'error');
+        }
     }
     
     async resetUserPassword(userId, email) {
         try {
-            // In a real app, you would send a password reset email
-            // For demo purposes, we'll just show a message
-            this.showMessage(`Password reset email sent to ${email}`, 'success');
+            const newPassword = prompt('Enter new password for ' + email + ' (min 6 characters):');
+            
+            if (!newPassword) {
+                this.showMessage('Password reset cancelled', 'info');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                this.showMessage('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            // Show loading
+            this.showMessage('Resetting password...', 'info');
+            
+            // Get the user from Firebase Auth
+            const userRecord = await this.auth.getUserByEmail(email);
+            
+            // Update password
+            await this.auth.updateUser(userRecord.uid, {
+                password: newPassword
+            });
+            
+            this.showMessage(`Password reset successfully for ${email}`, 'success');
             
         } catch (error) {
             console.error("Error resetting password:", error);
@@ -900,7 +1327,7 @@ class UsersManager {
             
             // Update user document
             await this.db.collection('users').doc(userId).update({
-                status: newStatus,
+                status: newStatus === 'active' ? 'active' : 'inactive',
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             
@@ -918,67 +1345,6 @@ class UsersManager {
         }
     }
     
-    async deleteUser(userId) {
-        try {
-            const user = this.users.find(u => u.id === userId);
-            if (!user) {
-                this.showMessage('User not found', 'error');
-                return;
-            }
-            
-            const confirmMessage = `Are you sure you want to delete ${user.name}? This action cannot be undone.\n\nThis will also delete all associated data (profiles, transactions, etc.).`;
-            
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-            
-            // In a real application, you would:
-            // 1. Delete from Firebase Auth
-            // 2. Delete all related documents from Firestore
-            // 3. Handle any cleanup
-            
-            // For demo purposes, we'll just show a message
-            this.showMessage(`User ${user.name} deleted successfully!`, 'success');
-            
-            // In production, you would implement actual deletion:
-            /*
-            // Delete from Auth
-            await this.auth.deleteUser(userId);
-            
-            // Delete from Firestore collections
-            const batch = this.db.batch();
-            
-            // Delete user document
-            batch.delete(this.db.collection('users').doc(userId));
-            
-            // Delete profile
-            batch.delete(this.db.collection('profiles').doc(userId));
-            
-            // Delete incomes
-            const incomes = await this.db.collection('incomes')
-                .where('user_id', '==', userId)
-                .get();
-            incomes.forEach(doc => batch.delete(doc.ref));
-            
-            // Delete expenses
-            const expenses = await this.db.collection('expenses')
-                .where('userId', '==', userId)
-                .get();
-            expenses.forEach(doc => batch.delete(doc.ref));
-            
-            // Commit batch
-            await batch.commit();
-            */
-            
-            // Refresh data
-            await this.loadUsersData();
-            
-        } catch (error) {
-            console.error("Error deleting user:", error);
-            this.showMessage('Error deleting user: ' + error.message, 'error');
-        }
-    }
-    
     exportUsersData() {
         try {
             // Prepare data for export
@@ -989,6 +1355,8 @@ class UsersManager {
                 'Phone': user.phone || 'N/A',
                 'Join Date': user.createdAt?.toDate().toISOString().split('T')[0] || 'N/A',
                 'Status': user.profileStatus,
+                'Account Status': user.status || 'active',
+                'Role': user.role || 'user',
                 'Total Income': user.totalIncome,
                 'Total Expenses': user.totalExpenses,
                 'Balance': user.totalIncome - user.totalExpenses
