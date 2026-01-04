@@ -1,4 +1,5 @@
-// Employees Management System
+
+// Employees Management System - VIEW ACCESS FOR ALL, MANAGEMENT FOR ADMINS ONLY
 class EmployeesManager {
     constructor() {
         this.employees = [];
@@ -11,17 +12,52 @@ class EmployeesManager {
         this.currentSort = 'newest';
         this.searchTerm = '';
         this.rolesChart = null;
+        this.csrfToken = this.generateCSRFToken();
+        this.rateLimits = {};
+        this.isAdmin = false;
+        this.currentUserId = null;
         this.init();
+    }
+
+    generateCSRFToken() {
+        return 'csrf_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    }
+
+    validateCSRFToken(action, token) {
+        if (!token || token !== this.csrfToken) {
+            console.warn(`CSRF validation failed for ${action}`);
+            return false;
+        }
+        
+        const tokenTime = parseInt(token.split('_').pop());
+        if (Date.now() - tokenTime > 7200000) { // 2 hours
+            this.csrfToken = this.generateCSRFToken();
+            return false;
+        }
+        
+        return true;
+    }
+
+    checkRateLimit(action, interval = 1000) {
+        const now = Date.now();
+        const lastAction = this.rateLimits[action] || 0;
+        
+        if (now - lastAction < interval) {
+            return true;
+        }
+        
+        this.rateLimits[action] = now;
+        return false;
     }
 
     async init() {
         console.log("🚀 Initializing Employees Manager...");
         
-        // Check authentication
-        await this.checkAuth();
-        
-        // Initialize Firebase
+        // Check authentication - ALL EMPLOYEES CAN ACCESS
         try {
+            await this.checkAuth();
+            
+            // Initialize Firebase
             let app;
             if (!firebase.apps.length) {
                 app = firebase.initializeApp(firebaseConfig);
@@ -51,17 +87,20 @@ class EmployeesManager {
         const user = await authSystem.checkAuth();
         if (!user.authenticated) {
             window.location.href = 'index.html';
-            return;
+            throw new Error("Not authenticated");
         }
         
-        // Check permissions - only admins and supervisor managers can manage employees
-        if (!authSystem.hasPermission('manageEmployees')) {
-            this.showError("You don't have permission to access this page.");
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 3000);
-            return;
+        // ✅ ALL EMPLOYEES CAN VIEW, ONLY ADMINS CAN MANAGE
+        this.isAdmin = user.user.role === 'Admin';
+        this.currentUserId = user.user.id;
+        
+        if (this.isAdmin) {
+            console.log("✅ Admin access verified:", user.user.email);
+        } else {
+            console.log("✅ Employee access (view only):", user.user.email, "Role:", user.user.role);
         }
+        
+        return true;
     }
     
     setupEvents() {
@@ -76,10 +115,13 @@ class EmployeesManager {
             window.location.href = 'dashboard.html';
         });
         
-        // Add employee button
-        document.getElementById('addEmployeeBtn').addEventListener('click', () => {
-            this.showAddEmployeeModal();
-        });
+        // Add employee button (only for admins)
+        const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+        if (addEmployeeBtn) {
+            addEmployeeBtn.addEventListener('click', () => {
+                this.showAddEmployeeModal();
+            });
+        }
         
         // Search functionality
         document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -109,10 +151,17 @@ class EmployeesManager {
             this.filterAndSortEmployees();
         });
         
-        // Export button
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            this.exportEmployeesData();
-        });
+        // Export button (only for admins)
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                if (!this.isAdmin) {
+                    this.showMessage('Administrator access required to export data.', 'error');
+                    return;
+                }
+                this.exportEmployeesData();
+            });
+        }
         
         // Refresh button
         document.getElementById('refreshBtn').addEventListener('click', () => {
@@ -140,7 +189,7 @@ class EmployeesManager {
             this.updateRolesChart(e.target.value);
         });
         
-        // Password strength checker
+        // Password strength checker (only for admins)
         const passwordInput = document.getElementById('newEmployeePassword');
         if (passwordInput) {
             passwordInput.addEventListener('input', (e) => {
@@ -149,13 +198,19 @@ class EmployeesManager {
         }
         
         // Role change listener for permission preview
-        document.getElementById('newEmployeeRole').addEventListener('change', (e) => {
-            this.showPermissionsPreview(e.target.value);
-        });
+        const newRoleSelect = document.getElementById('newEmployeeRole');
+        if (newRoleSelect) {
+            newRoleSelect.addEventListener('change', (e) => {
+                this.showPermissionsPreview(e.target.value);
+            });
+        }
         
-        document.getElementById('editEmployeeRole').addEventListener('change', (e) => {
-            this.showEditPermissionsPreview(e.target.value);
-        });
+        const editRoleSelect = document.getElementById('editEmployeeRole');
+        if (editRoleSelect) {
+            editRoleSelect.addEventListener('change', (e) => {
+                this.showEditPermissionsPreview(e.target.value);
+            });
+        }
         
         // Modal close buttons
         document.getElementById('closeAddEmployeeModal').addEventListener('click', () => {
@@ -178,23 +233,50 @@ class EmployeesManager {
             this.hideEditEmployeeModal();
         });
         
-        // Add employee form
-        document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.addNewEmployee();
-        });
+        // Add employee form (only for admins)
+        const addEmployeeForm = document.getElementById('addEmployeeForm');
+        if (addEmployeeForm) {
+            // Add CSRF token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = this.csrfToken;
+            addEmployeeForm.appendChild(csrfInput);
+            
+            addEmployeeForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.addNewEmployee();
+            });
+        }
         
-        // Edit employee form
-        document.getElementById('editEmployeeForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.updateEmployee();
-        });
+        // Edit employee form (only for admins)
+        const editEmployeeForm = document.getElementById('editEmployeeForm');
+        if (editEmployeeForm) {
+            // Add CSRF token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = this.csrfToken;
+            editEmployeeForm.appendChild(csrfInput);
+            
+            editEmployeeForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.updateEmployee();
+            });
+        }
         
-        // Send password reset button
-        document.getElementById('sendResetPasswordBtn').addEventListener('click', () => {
-            const email = document.getElementById('resetPasswordEmail').value;
-            this.sendPasswordResetEmail(email);
-        });
+        // Send password reset button (only for admins)
+        const resetPasswordBtn = document.getElementById('sendResetPasswordBtn');
+        if (resetPasswordBtn) {
+            resetPasswordBtn.addEventListener('click', () => {
+                if (!this.isAdmin) {
+                    this.showMessage('Administrator access required.', 'error');
+                    return;
+                }
+                const email = document.getElementById('resetPasswordEmail').value;
+                this.sendPasswordResetEmail(email);
+            });
+        }
         
         // Close modals when clicking outside
         document.querySelectorAll('.modal').forEach(modal => {
@@ -204,6 +286,37 @@ class EmployeesManager {
                 }
             });
         });
+        
+        // Hide admin functions if not admin
+        setTimeout(() => {
+            if (!this.isAdmin) {
+                this.hideAdminFunctions();
+                this.showMessage('View-only mode: You can view employees. Administrator privileges required for management functions.', 'info');
+            }
+        }, 1000);
+    }
+    
+    hideAdminFunctions() {
+        // Hide add button
+        const addBtn = document.getElementById('addEmployeeBtn');
+        if (addBtn) addBtn.style.display = 'none';
+        
+        // Hide export button
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) exportBtn.style.display = 'none';
+        
+        // Disable role and status filters for non-admins
+        const roleFilter = document.getElementById('roleFilter');
+        if (roleFilter) {
+            roleFilter.disabled = true;
+            roleFilter.title = 'Admin access required to filter by role';
+        }
+        
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+            statusFilter.disabled = true;
+            statusFilter.title = 'Admin access required to filter by status';
+        }
     }
     
     updateUserInfo() {
@@ -211,6 +324,12 @@ class EmployeesManager {
         if (user) {
             document.getElementById('userName').textContent = user.name || user.email;
             document.getElementById('userRole').textContent = user.role || 'User';
+            
+            // Show admin badge if admin
+            if (user.role === 'Admin') {
+                const userRoleElement = document.getElementById('userRole');
+                userRoleElement.innerHTML = `<span class="admin-badge">👑 ${user.role}</span>`;
+            }
         }
     }
     
@@ -223,9 +342,6 @@ class EmployeesManager {
             const employeesSnapshot = await this.db.collection('employees').get();
             this.employees = [];
             
-            // Get current user's ID to prevent self-modification
-            const currentUserId = authSystem.currentUser?.id;
-            
             employeesSnapshot.forEach(doc => {
                 const employeeData = doc.data();
                 const employee = {
@@ -235,7 +351,9 @@ class EmployeesManager {
                     joinDate: employeeData.createdAt?.toDate(),
                     lastLogin: employeeData.lastLogin?.toDate(),
                     // Calculate if this is the current user
-                    isCurrentUser: doc.id === currentUserId
+                    isCurrentUser: doc.id === this.currentUserId,
+                    // Check if this is an admin
+                    isAdmin: employeeData.role === 'Admin'
                 };
                 
                 this.employees.push(employee);
@@ -265,6 +383,7 @@ class EmployeesManager {
     async updateStatistics() {
         const totalEmployees = this.employees.length;
         const activeEmployees = this.employees.filter(emp => emp.status === 'active').length;
+        const adminCount = this.employees.filter(emp => emp.role === 'Admin').length;
         
         // Calculate growth this month
         const now = new Date();
@@ -309,6 +428,14 @@ class EmployeesManager {
         document.getElementById('topRole').textContent = topRole;
         
         document.getElementById('recentEmployeesCount').textContent = recentEmployees;
+        
+        // Show admin count if user is admin
+        if (this.isAdmin) {
+            const adminElement = document.createElement('div');
+            adminElement.className = 'admin-stat';
+            adminElement.innerHTML = `<strong>👑 Admins:</strong> ${adminCount}`;
+            document.querySelector('.stats-grid').appendChild(adminElement);
+        }
     }
     
     initRolesChart() {
@@ -464,14 +591,14 @@ class EmployeesManager {
             this.filteredEmployees = [...this.employees];
         }
         
-        // Apply role filter
+        // Apply role filter (if enabled)
         if (this.currentRoleFilter !== 'all') {
             this.filteredEmployees = this.filteredEmployees.filter(employee => 
                 employee.role === this.currentRoleFilter
             );
         }
         
-        // Apply status filter
+        // Apply status filter (if enabled)
         if (this.currentStatusFilter !== 'all') {
             this.filteredEmployees = this.filteredEmployees.filter(employee => 
                 employee.status === this.currentStatusFilter
@@ -550,10 +677,12 @@ class EmployeesManager {
                         <i class="fas fa-user-tie"></i>
                         <h4>No employees found</h4>
                         <p>${this.searchTerm ? 'Try a different search term' : 'No employees available'}</p>
+                        ${this.isAdmin ? `
                         <button class="btn btn-primary" id="addFirstEmployeeBtn">
                             <i class="fas fa-user-plus"></i>
                             Add First Employee
                         </button>
+                        ` : ''}
                     </td>
                 </tr>
             `;
@@ -596,11 +725,16 @@ class EmployeesManager {
             // Get role badge class
             const roleClass = this.getRoleBadgeClass(employee.role);
             
+            // Check permissions
+            const canEdit = this.isAdmin && !employee.isCurrentUser;
+            const canDelete = this.isAdmin && !employee.isCurrentUser && !employee.isAdmin;
+            
             return `
                 <tr>
                     <td>
                         <strong>${employee.name}</strong>
-                        ${employee.isCurrentUser ? '<span style="color: var(--primary-color); margin-left: 5px;">(You)</span>' : ''}
+                        ${employee.isCurrentUser ? '<span class="current-user-badge">(You)</span>' : ''}
+                        ${employee.role === 'Admin' ? '<span class="admin-indicator">👑 Admin</span>' : ''}
                     </td>
                     <td>${employee.email}</td>
                     <td>${employee.phone || 'N/A'}</td>
@@ -618,23 +752,30 @@ class EmployeesManager {
                     <td>${lastLoginStr}</td>
                     <td>
                         <div class="action-buttons">
+                            <!-- View button - always visible for all employees -->
                             <button class="action-btn view-btn" 
                                     title="View Details"
                                     onclick="employeesManager.viewEmployeeDetails('${employee.id}')">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            
+                            <!-- Edit button - only for admins -->
+                            ${canEdit ? `
                             <button class="action-btn edit-btn" 
                                     title="Edit Employee"
-                                    onclick="employeesManager.editEmployee('${employee.id}')"
-                                    ${employee.isCurrentUser ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                                    onclick="employeesManager.editEmployee('${employee.id}')">
                                 <i class="fas fa-edit"></i>
                             </button>
+                            ` : ''}
+                            
+                            <!-- Delete button - only for admins -->
+                            ${canDelete ? `
                             <button class="action-btn delete-btn" 
                                     title="Delete Employee"
-                                    onclick="employeesManager.deleteEmployee('${employee.id}')"
-                                    ${employee.isCurrentUser ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                                    onclick="employeesManager.deleteEmployee('${employee.id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>
@@ -671,6 +812,12 @@ class EmployeesManager {
     }
     
     showAddEmployeeModal() {
+        // Check if user is admin
+        if (!this.isAdmin) {
+            this.showMessage('❌ Administrator access required to add employees.', 'error');
+            return;
+        }
+        
         document.getElementById('addEmployeeModal').classList.add('active');
         document.getElementById('addEmployeeForm').reset();
         document.getElementById('passwordStrength').textContent = 'Strength: Weak';
@@ -831,9 +978,28 @@ class EmployeesManager {
     
     async addNewEmployee() {
         try {
-            const name = document.getElementById('newEmployeeName').value;
-            const email = document.getElementById('newEmployeeEmail').value;
-            const phone = document.getElementById('newEmployeePhone').value;
+            // Check if user is admin
+            if (!this.isAdmin) {
+                this.showMessage('❌ Administrator access required to add employees.', 'error');
+                return;
+            }
+            
+            // CSRF Protection
+            const csrfInput = document.querySelector('#addEmployeeForm [name="csrf_token"]');
+            if (!csrfInput || !this.validateCSRFToken('add_employee', csrfInput.value)) {
+                this.showMessage('Security token invalid. Please refresh the page.', 'error');
+                return;
+            }
+            
+            // Rate limiting
+            if (this.checkRateLimit('add_employee', 3000)) {
+                this.showMessage('Please wait before adding another employee.', 'warning');
+                return;
+            }
+            
+            const name = document.getElementById('newEmployeeName').value.trim();
+            const email = document.getElementById('newEmployeeEmail').value.trim();
+            const phone = document.getElementById('newEmployeePhone').value.trim();
             const role = document.getElementById('newEmployeeRole').value;
             const password = document.getElementById('newEmployeePassword').value;
             const status = document.getElementById('newEmployeeStatus').value;
@@ -844,14 +1010,25 @@ class EmployeesManager {
                 return;
             }
             
+            if (!this.isValidEmail(email)) {
+                this.showMessage('Please enter a valid email address', 'error');
+                return;
+            }
+            
             if (password.length < 6) {
                 this.showMessage('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            if (!this.isValidPhone(phone)) {
+                this.showMessage('Please enter a valid phone number', 'error');
                 return;
             }
             
             // Check if email already exists in employees collection
             const existingEmployee = await this.db.collection('employees')
                 .where('email', '==', email)
+                .limit(1)
                 .get();
             
             if (!existingEmployee.empty) {
@@ -863,6 +1040,9 @@ class EmployeesManager {
             const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
             const userId = userCredential.user.uid;
             
+            // Get current admin info
+            const currentAdmin = authSystem.currentUser;
+            
             // Create employee document in Firestore
             await this.db.collection('employees').doc(userId).set({
                 name: name,
@@ -870,12 +1050,16 @@ class EmployeesManager {
                 phone: phone,
                 role: role,
                 status: status,
+                createdBy: currentAdmin?.email || 'system',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastLogin: null
             });
             
+            // Log the action
+            await this.logAdminAction('employee_created', `Created employee: ${name} (${email})`, userId);
+            
             // Show success message
-            this.showMessage(`Employee ${name} created successfully!`, 'success');
+            this.showMessage(`✅ Employee ${name} created successfully!`, 'success');
             
             // Close modal
             this.hideAddEmployeeModal();
@@ -883,19 +1067,25 @@ class EmployeesManager {
             // Refresh employees list
             await this.loadEmployeesData();
             
+            // Generate new CSRF token
+            this.csrfToken = this.generateCSRFToken();
+            
         } catch (error) {
             console.error("Error adding employee:", error);
             
             let errorMessage = 'Error creating employee: ';
             switch (error.code) {
                 case 'auth/email-already-in-use':
-                    errorMessage += 'Email already in use';
+                    errorMessage = 'Email already in use';
                     break;
                 case 'auth/invalid-email':
-                    errorMessage += 'Invalid email address';
+                    errorMessage = 'Invalid email address';
                     break;
                 case 'auth/weak-password':
-                    errorMessage += 'Password is too weak';
+                    errorMessage = 'Password is too weak';
+                    break;
+                case 'auth/operation-not-allowed':
+                    errorMessage = 'User creation is not allowed';
                     break;
                 default:
                     errorMessage += error.message;
@@ -905,8 +1095,41 @@ class EmployeesManager {
         }
     }
     
+    async logAdminAction(action, description, targetId = null) {
+        try {
+            const currentUser = authSystem.currentUser;
+            await this.db.collection('admin_logs').add({
+                adminId: currentUser?.id,
+                adminEmail: currentUser?.email,
+                action: action,
+                description: description,
+                targetId: targetId,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                ipAddress: 'web_dashboard' // In production, get real IP
+            });
+        } catch (error) {
+            console.error('Error logging admin action:', error);
+        }
+    }
+    
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    isValidPhone(phone) {
+        const phoneRegex = /^[\d\s\-\+\(\)]{10,20}$/;
+        return phoneRegex.test(phone);
+    }
+    
     async editEmployee(employeeId) {
         try {
+            // Check if user is admin
+            if (!this.isAdmin) {
+                this.showMessage('❌ Administrator access required to edit employees.', 'error');
+                return;
+            }
+            
             const employee = this.employees.find(emp => emp.id === employeeId);
             if (!employee) {
                 this.showMessage('Employee not found', 'error');
@@ -916,6 +1139,12 @@ class EmployeesManager {
             // Don't allow editing of own account from here
             if (employee.isCurrentUser) {
                 this.showMessage('You cannot edit your own account from here. Use profile settings instead.', 'warning');
+                return;
+            }
+            
+            // Don't allow editing other admins unless you're admin
+            if (employee.role === 'Admin' && !this.isAdmin) {
+                this.showMessage('Only administrators can edit other administrators.', 'error');
                 return;
             }
             
@@ -945,16 +1174,39 @@ class EmployeesManager {
     
     async updateEmployee() {
         try {
+            // Check if user is admin
+            if (!this.isAdmin) {
+                this.showMessage('❌ Administrator access required to update employees.', 'error');
+                return;
+            }
+            
+            // CSRF Protection
+            const csrfInput = document.querySelector('#editEmployeeForm [name="csrf_token"]');
+            if (!csrfInput || !this.validateCSRFToken('update_employee', csrfInput.value)) {
+                this.showMessage('Security token invalid. Please refresh the page.', 'error');
+                return;
+            }
+            
             const employeeId = document.getElementById('editEmployeeId').value;
-            const name = document.getElementById('editEmployeeName').value;
-            const email = document.getElementById('editEmployeeEmail').value;
-            const phone = document.getElementById('editEmployeePhone').value;
+            const name = document.getElementById('editEmployeeName').value.trim();
+            const email = document.getElementById('editEmployeeEmail').value.trim();
+            const phone = document.getElementById('editEmployeePhone').value.trim();
             const role = document.getElementById('editEmployeeRole').value;
             const status = document.getElementById('editEmployeeStatus').value;
             
             // Validate inputs
             if (!name || !email || !phone || !role || !status) {
                 this.showMessage('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            if (!this.isValidEmail(email)) {
+                this.showMessage('Please enter a valid email address', 'error');
+                return;
+            }
+            
+            if (!this.isValidPhone(phone)) {
+                this.showMessage('Please enter a valid phone number', 'error');
                 return;
             }
             
@@ -969,6 +1221,7 @@ class EmployeesManager {
             if (email !== employee.email) {
                 const existingEmployee = await this.db.collection('employees')
                     .where('email', '==', email)
+                    .limit(1)
                     .get();
                 
                 if (!existingEmployee.empty) {
@@ -984,24 +1237,24 @@ class EmployeesManager {
                 phone: phone,
                 role: role,
                 status: status,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: authSystem.currentUser?.email
             });
             
-            // If email changed, update in Auth (this requires admin privileges)
-            if (email !== employee.email) {
-                // Note: In production, you would need to use Admin SDK for this
-                // For now, we'll just update the Firestore document
-                this.showMessage('Note: Email update in authentication system requires Admin SDK', 'info');
-            }
+            // Log the action
+            await this.logAdminAction('employee_updated', `Updated employee: ${name} (${email})`, employeeId);
             
             // Show success message
-            this.showMessage(`Employee ${name} updated successfully!`, 'success');
+            this.showMessage(`✅ Employee ${name} updated successfully!`, 'success');
             
             // Close modal
             this.hideEditEmployeeModal();
             
             // Refresh employees list
             await this.loadEmployeesData();
+            
+            // Generate new CSRF token
+            this.csrfToken = this.generateCSRFToken();
             
         } catch (error) {
             console.error("Error updating employee:", error);
@@ -1011,10 +1264,19 @@ class EmployeesManager {
     
     async sendPasswordResetEmail(email) {
         try {
+            // Check if user is admin
+            if (!this.isAdmin) {
+                this.showMessage('❌ Administrator access required.', 'error');
+                return;
+            }
+            
             // In a real app, you would use Firebase Admin SDK to send reset email
             // For demo purposes, we'll simulate the process
             
             this.showMessage(`Password reset email sent to ${email}`, 'success');
+            
+            // Log the action
+            await this.logAdminAction('password_reset_sent', `Sent password reset to: ${email}`);
             
             // In production, you would use:
             // await this.auth.sendPasswordResetEmail(email);
@@ -1097,6 +1359,11 @@ class EmployeesManager {
             .toUpperCase()
             .substring(0, 2);
         
+        // Check permissions for action buttons
+        const canEdit = this.isAdmin && !employee.isCurrentUser;
+        const canToggle = this.isAdmin && !employee.isCurrentUser;
+        const canResetPassword = this.isAdmin;
+        
         return `
             <div class="employee-details-view">
                 <!-- Avatar and Basic Info -->
@@ -1111,6 +1378,7 @@ class EmployeesManager {
                     <div class="employee-role">
                         <span class="role-badge ${this.getRoleBadgeClass(employee.role)}">
                             ${employee.role || 'Unknown Role'}
+                            ${employee.role === 'Admin' ? ' 👑' : ''}
                         </span>
                     </div>
                 </div>
@@ -1138,7 +1406,7 @@ class EmployeesManager {
                     
                     <div class="employee-stat">
                         <div class="employee-stat-label">Account Type</div>
-                        <div class="employee-stat-value">Employee</div>
+                        <div class="employee-stat-value">${employee.role === 'Admin' ? '👑 Administrator' : 'Employee'}</div>
                     </div>
                 </div>
                 
@@ -1177,21 +1445,27 @@ class EmployeesManager {
                 
                 <!-- Action Buttons -->
                 <div class="details-actions">
-                    <button class="btn btn-primary" onclick="employeesManager.editEmployee('${employee.id}')"
-                            ${employee.isCurrentUser ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                    ${canEdit ? `
+                    <button class="btn btn-primary" onclick="employeesManager.editEmployee('${employee.id}')">
                         <i class="fas fa-edit"></i>
                         Edit Employee
                     </button>
+                    ` : ''}
+                    
+                    ${canResetPassword ? `
                     <button class="btn btn-secondary" onclick="employeesManager.sendPasswordResetEmail('${employee.email}')">
                         <i class="fas fa-key"></i>
                         Reset Password
                     </button>
+                    ` : ''}
+                    
+                    ${canToggle ? `
                     <button class="btn ${employee.status === 'active' ? 'btn-warning' : 'btn-primary'}" 
-                            onclick="employeesManager.toggleEmployeeStatus('${employee.id}', '${employee.status}')"
-                            ${employee.isCurrentUser ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                            onclick="employeesManager.toggleEmployeeStatus('${employee.id}', '${employee.status}')">
                         <i class="fas fa-toggle-${employee.status === 'active' ? 'off' : 'on'}"></i>
                         ${employee.status === 'active' ? 'Deactivate' : 'Activate'}
                     </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -1282,6 +1556,12 @@ class EmployeesManager {
     
     async toggleEmployeeStatus(employeeId, currentStatus) {
         try {
+            // Check if user is admin
+            if (!this.isAdmin) {
+                this.showMessage('❌ Administrator access required.', 'error');
+                return;
+            }
+            
             const employee = this.employees.find(emp => emp.id === employeeId);
             if (!employee) {
                 this.showMessage('Employee not found', 'error');
@@ -1291,6 +1571,12 @@ class EmployeesManager {
             // Don't allow deactivating own account
             if (employee.isCurrentUser) {
                 this.showMessage('You cannot deactivate your own account', 'warning');
+                return;
+            }
+            
+            // Don't allow deactivating other admins
+            if (employee.role === 'Admin') {
+                this.showMessage('Cannot deactivate administrator accounts', 'warning');
                 return;
             }
             
@@ -1304,10 +1590,15 @@ class EmployeesManager {
             // Update employee status
             await this.db.collection('employees').doc(employeeId).update({
                 status: newStatus,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: authSystem.currentUser?.email
             });
             
-            this.showMessage(`Employee ${employee.name} ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`, 'success');
+            // Log the action
+            await this.logAdminAction('employee_status_changed', 
+                `Changed status to ${newStatus} for: ${employee.name}`, employeeId);
+            
+            this.showMessage(`✅ Employee ${employee.name} ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`, 'success');
             
             // Refresh data
             await this.loadEmployeesData();
@@ -1323,6 +1614,12 @@ class EmployeesManager {
     
     async deleteEmployee(employeeId) {
         try {
+            // Check if user is admin
+            if (!this.isAdmin) {
+                this.showMessage('❌ Administrator access required.', 'error');
+                return;
+            }
+            
             const employee = this.employees.find(emp => emp.id === employeeId);
             if (!employee) {
                 this.showMessage('Employee not found', 'error');
@@ -1335,25 +1632,35 @@ class EmployeesManager {
                 return;
             }
             
-            const confirmMessage = `Are you sure you want to delete ${employee.name}? This action cannot be undone.\n\nThis will permanently delete their employee account and access to the dashboard.`;
+            // Don't allow deleting admin accounts
+            if (employee.role === 'Admin') {
+                this.showMessage('Cannot delete administrator accounts', 'warning');
+                return;
+            }
+            
+            const confirmMessage = `⚠️ Are you sure you want to delete ${employee.name}?\n\nThis will:\n• Permanently delete their employee account\n• Remove their access to the dashboard\n• This action cannot be undone`;
             
             if (!confirm(confirmMessage)) {
                 return;
             }
             
+            // Log before deletion
+            await this.logAdminAction('employee_deleted', 
+                `Deleted employee: ${employee.name} (${employee.email})`, employeeId);
+            
             // In a real application, you would:
-            // 1. Delete from Firebase Auth
+            // 1. Delete from Firebase Auth (requires Admin SDK)
             // 2. Delete from Firestore
             
-            // For demo purposes, we'll just show a message
-            this.showMessage(`Employee ${employee.name} deleted successfully!`, 'success');
+            // For now, we'll just mark as deleted
+            await this.db.collection('employees').doc(employeeId).update({
+                status: 'deleted',
+                deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                deletedBy: authSystem.currentUser?.email
+            });
             
-            // In production, implement actual deletion:
-            /*
-            // Delete from Auth (requires Admin SDK)
-            // Delete from Firestore
-            await this.db.collection('employees').doc(employeeId).delete();
-            */
+            // Show success message
+            this.showMessage(`✅ Employee ${employee.name} deleted successfully!`, 'success');
             
             // Refresh data
             await this.loadEmployeesData();
@@ -1366,6 +1673,18 @@ class EmployeesManager {
     
     exportEmployeesData() {
         try {
+            // Check if user is admin
+            if (!this.isAdmin) {
+                this.showMessage('❌ Administrator access required.', 'error');
+                return;
+            }
+            
+            // Rate limiting
+            if (this.checkRateLimit('export', 5000)) {
+                this.showMessage('Please wait before exporting again.', 'warning');
+                return;
+            }
+            
             // Prepare data for export
             const exportData = this.filteredEmployees.map(employee => ({
                 'Name': employee.name,
@@ -1374,7 +1693,8 @@ class EmployeesManager {
                 'Role': employee.role || 'Unknown',
                 'Status': employee.status || 'active',
                 'Join Date': employee.joinDate?.toISOString().split('T')[0] || 'N/A',
-                'Last Login': employee.lastLogin?.toISOString().split('T')[0] || 'Never'
+                'Last Login': employee.lastLogin?.toISOString().split('T')[0] || 'Never',
+                'Created By': employee.createdBy || 'system'
             }));
             
             // Convert to CSV
@@ -1401,7 +1721,10 @@ class EmployeesManager {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             
-            this.showMessage('Export completed successfully!', 'success');
+            // Log the action
+            this.logAdminAction('export_data', 'Exported employees data');
+            
+            this.showMessage('✅ Export completed successfully!', 'success');
             
         } catch (error) {
             console.error("Error exporting data:", error);
@@ -1439,7 +1762,9 @@ class EmployeesManager {
         
         // Add to page
         const container = document.querySelector('.main-content');
-        container.insertBefore(messageDiv, container.firstChild);
+        if (container) {
+            container.insertBefore(messageDiv, container.firstChild);
+        }
         
         // Auto-remove after 5 seconds
         setTimeout(() => {
@@ -1462,16 +1787,26 @@ class EmployeesManager {
     showError(message) {
         const container = document.querySelector('.main-content');
         if (container) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 50px; color: var(--danger-color);">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 50px; margin-bottom: 20px;"></i>
-                    <h2>⚠️ System Error</h2>
-                    <p>${message}</p>
-                    <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 20px;">
-                        <i class="fas fa-redo"></i> Reload Page
-                    </button>
-                </div>
-            `;
+            // Check if we're already showing an error
+            if (!container.querySelector('.auth-error')) {
+                const errorHTML = `
+                    <div class="auth-error" style="text-align: center; padding: 50px; color: #dc3545;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 50px; margin-bottom: 20px;"></i>
+                        <h2>⚠️ Access Restricted</h2>
+                        <p>${message}</p>
+                        <p>Redirecting to login page...</p>
+                        <button onclick="window.location.href='index.html'" class="btn btn-primary" style="margin-top: 20px;">
+                            <i class="fas fa-sign-in-alt"></i> Go to Login
+                        </button>
+                    </div>
+                `;
+                container.innerHTML = errorHTML;
+                
+                // Auto-redirect after 3 seconds
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+            }
         }
     }
 }
