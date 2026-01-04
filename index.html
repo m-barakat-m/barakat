@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,11 +53,11 @@
                     <p class="error-message" id="errorMessage"></p>
                     <p class="footer-note">
                         <i class="fas fa-shield-alt"></i>
-                        Administrator access only. 
+                        Employee access only. 
                         <br>
                         <small>
-                            Admins are created via Firebase Console.
-                            Contact system administrator for access.
+                            All active employees can login.
+                            Contact system administrator for access issues.
                         </small>
                     </p>
                 </div>
@@ -72,8 +71,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- Configuration -->
-     <script src="config.js"></script>
+    <script src="config.js"></script>
     <script src="firebase-config.js"></script>
+    
+    <!-- Auth System -->
+    <script src="auth.js"></script>
+    
     <script>
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
@@ -84,22 +87,22 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
-                    // Check if user is an admin
+                    // Check if user is an active employee
                     const employeeDoc = await db.collection('employees').doc(user.uid).get();
                     
                     if (employeeDoc.exists) {
                         const employeeData = employeeDoc.data();
                         
-                        // Only allow admins to login
-                        if (employeeData.role === 'Admin' && employeeData.status === 'active') {
+                        // ✅ ALLOW ALL ACTIVE EMPLOYEES (NOT JUST ADMINS)
+                        if (employeeData.status === 'active') {
                             window.location.href = 'dashboard.html';
                         } else {
                             await auth.signOut();
-                            showError('Access restricted to administrators only.');
+                            showError('Your account is inactive. Contact administrator.');
                         }
                     } else {
                         await auth.signOut();
-                        showError('User not found in system.');
+                        showError('User not found in system. Contact administrator.');
                     }
                 } catch (error) {
                     console.error('Session check error:', error);
@@ -108,7 +111,7 @@
             }
         });
 
-        // Handle login
+        // Handle login using authSystem
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -119,7 +122,7 @@
             
             // Validate
             if (!email || !password) {
-                showError('Please enter credentials.');
+                showError('Please enter email and password.');
                 return;
             }
             
@@ -130,41 +133,48 @@
             errorMessage.textContent = '';
             
             try {
-                // Firebase authentication
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const userId = userCredential.user.uid;
-                
-                // Verify admin status
-                const employeeDoc = await db.collection('employees').doc(userId).get();
-                
-                if (!employeeDoc.exists) {
-                    await auth.signOut();
-                    showError('Access denied. Not registered in system.');
-                    return;
+                // Use authSystem for authentication
+                if (window.authSystem) {
+                    const result = await window.authSystem.login(email, password);
+                    
+                    if (result.success) {
+                        // Redirect to dashboard
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        showError(result.error);
+                        document.getElementById('password').value = '';
+                    }
+                } else {
+                    // Fallback to direct Firebase authentication
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    const userId = userCredential.user.uid;
+                    
+                    // Verify employee exists and is active
+                    const employeeDoc = await db.collection('employees').doc(userId).get();
+                    
+                    if (!employeeDoc.exists) {
+                        await auth.signOut();
+                        showError('Access denied. Not registered in system.');
+                        return;
+                    }
+                    
+                    const employeeData = employeeDoc.data();
+                    
+                    // ✅ ALLOW ALL ACTIVE EMPLOYEES (NOT JUST ADMINS)
+                    if (employeeData.status !== 'active') {
+                        await auth.signOut();
+                        showError('Account is inactive. Contact administrator.');
+                        return;
+                    }
+                    
+                    // Update last login
+                    await db.collection('employees').doc(userId).update({
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Redirect to dashboard
+                    window.location.href = 'dashboard.html';
                 }
-                
-                const employeeData = employeeDoc.data();
-                
-                // STRICT: Only admins can login
-                if (employeeData.role !== 'Admin') {
-                    await auth.signOut();
-                    showError('Access restricted to administrators only.');
-                    return;
-                }
-                
-                if (employeeData.status !== 'active') {
-                    await auth.signOut();
-                    showError('Account is inactive.');
-                    return;
-                }
-                
-                // Update last login
-                await db.collection('employees').doc(userId).update({
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Redirect to dashboard
-                window.location.href = 'dashboard.html';
                 
             } catch (error) {
                 let errorMsg = 'Login failed. ';
@@ -172,13 +182,19 @@
                 switch (error.code) {
                     case 'auth/user-not-found':
                     case 'auth/wrong-password':
-                        errorMsg = 'Invalid credentials.';
+                        errorMsg = 'Invalid email or password.';
                         break;
                     case 'auth/user-disabled':
-                        errorMsg = 'Account disabled.';
+                        errorMsg = 'Account disabled. Contact administrator.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMsg = 'Invalid email address.';
                         break;
                     case 'auth/too-many-requests':
-                        errorMsg = 'Too many attempts. Try later.';
+                        errorMsg = 'Too many attempts. Try again later.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMsg = 'Network error. Check your connection.';
                         break;
                     default:
                         errorMsg += 'Please try again.';
@@ -194,11 +210,20 @@
         });
 
         function showError(message) {
-            document.getElementById('errorMessage').textContent = message;
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
             setTimeout(() => {
-                document.getElementById('errorMessage').textContent = '';
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
             }, 5000);
         }
+        
+        // Focus on email field when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('email').focus();
+        });
     </script>
 </body>
 </html>
