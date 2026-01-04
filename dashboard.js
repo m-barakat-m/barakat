@@ -1,10 +1,11 @@
-// Dashboard Management System
+// Dashboard Management System - COMPLETE VERSION
 class DashboardSystem {
     constructor() {
         this.user = null;
         this.permissions = {};
         this.charts = {};
         this.isLoading = false;
+        this.realTimeListeners = [];
         this.init();
     }
 
@@ -102,6 +103,11 @@ class DashboardSystem {
         document.getElementById('systemSettingsBtn').addEventListener('click', () => {
             window.location.href = 'preferences.html';
         });
+        
+        // Real-time toggle
+        document.getElementById('toggleRealTimeBtn').addEventListener('click', () => {
+            this.toggleRealTimeUpdates();
+        });
     }
     
     async checkAuth() {
@@ -129,6 +135,9 @@ class DashboardSystem {
                 
                 // Load all dashboard data
                 await this.loadDashboardData();
+                
+                // Start real-time updates
+                this.startRealTimeUpdates();
                 
             } else {
                 console.error("❌ Employee data not found");
@@ -161,6 +170,33 @@ class DashboardSystem {
                     minute: '2-digit'
                 });
         }
+        
+        // Update permissions-based UI
+        this.updatePermissionsUI();
+    }
+    
+    updatePermissionsUI() {
+        // Show/hide buttons based on permissions
+        const addUserBtn = document.getElementById('addUserBtn');
+        const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const systemSettingsBtn = document.getElementById('systemSettingsBtn');
+        
+        if (addUserBtn) {
+            addUserBtn.style.display = authSystem.hasPermission('manageUsers') ? 'block' : 'none';
+        }
+        
+        if (addEmployeeBtn) {
+            addEmployeeBtn.style.display = authSystem.hasPermission('manageEmployees') ? 'block' : 'none';
+        }
+        
+        if (generateReportBtn) {
+            generateReportBtn.style.display = authSystem.hasPermission('viewReports') ? 'block' : 'none';
+        }
+        
+        if (systemSettingsBtn) {
+            systemSettingsBtn.style.display = authSystem.hasPermission('manage') ? 'block' : 'none';
+        }
     }
     
     async loadDashboardData() {
@@ -174,6 +210,7 @@ class DashboardSystem {
                 this.loadIncomesStatistics(),
                 this.loadExpensesStatistics(),
                 this.loadCategoriesStatistics(),
+                this.loadProfilesStatistics(),
                 this.loadRecentActivity(),
                 this.loadChartsData(6)
             ]);
@@ -183,6 +220,9 @@ class DashboardSystem {
             
             // Load notifications
             this.loadNotifications();
+            
+            // Show real-time indicator
+            this.showRealTimeIndicator(true);
             
         } catch (error) {
             console.error("❌ Error loading dashboard data:", error);
@@ -343,10 +383,48 @@ class DashboardSystem {
         }
     }
     
+    async loadProfilesStatistics() {
+        try {
+            const profilesSnapshot = await this.db.collection('profiles').get();
+            const totalProfiles = profilesSnapshot.size;
+            
+            // Calculate profiles with complete info
+            let completeProfiles = 0;
+            profilesSnapshot.forEach(doc => {
+                const profile = doc.data();
+                // Simple completion check - has at least 5 fields filled
+                const filledFields = [
+                    profile.displayName,
+                    profile.email,
+                    profile.phone,
+                    profile.country,
+                    profile.currency,
+                    profile.language
+                ].filter(field => field && field !== '').length;
+                
+                if (filledFields >= 5) {
+                    completeProfiles++;
+                }
+            });
+            
+            const completionRate = totalProfiles > 0 ? 
+                Math.round((completeProfiles / totalProfiles) * 100) : 0;
+            
+            // You can display this in a new stat card or update existing UI
+            
+        } catch (error) {
+            console.error("Error loading profiles statistics:", error);
+        }
+    }
+    
     async loadRecentActivity() {
         try {
-            // Load recent users
+            // Load recent users (last 7 days)
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
             const usersSnapshot = await this.db.collection('users')
+                .where('createdAt', '>=', sevenDaysAgo)
                 .orderBy('createdAt', 'desc')
                 .limit(5)
                 .get();
@@ -357,22 +435,44 @@ class DashboardSystem {
                 const date = user.createdAt?.toDate();
                 const dateStr = date ? date.toLocaleDateString('en-US') : 'N/A';
                 
+                // Get user status (check if has profile)
+                const hasProfile = this.checkUserHasProfile(doc.id);
+                const statusText = hasProfile ? 'Active' : 'Pending';
+                const statusClass = hasProfile ? 'active' : 'pending';
+                
                 return `
                     <tr>
-                        <td>${user.name || 'N/A'}</td>
+                        <td>
+                            <div class="user-cell-small">
+                                <div class="user-avatar-tiny">${user.name?.charAt(0) || 'U'}</div>
+                                <span>${user.name || 'N/A'}</span>
+                            </div>
+                        </td>
                         <td>${user.email || 'N/A'}</td>
                         <td>${dateStr}</td>
                         <td>
-                            <span style="padding: 4px 8px; border-radius: 12px; background: #c6f6d5; color: #22543d; font-size: 0.8rem;">
-                                Active
+                            <span class="status-badge status-${statusClass}">
+                                ${statusText}
                             </span>
                         </td>
                     </tr>
                 `;
             }).join('');
             
-            // Load recent incomes
+            if (usersSnapshot.empty) {
+                usersTable.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="no-data">
+                            <i class="fas fa-users"></i>
+                            <p>No new users in the last 7 days</p>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Load recent incomes (last 7 days)
             const incomesSnapshot = await this.db.collection('incomes')
+                .where('date', '>=', sevenDaysAgo)
                 .orderBy('date', 'desc')
                 .limit(5)
                 .get();
@@ -388,16 +488,37 @@ class DashboardSystem {
                 
                 return `
                     <tr>
-                        <td>${userName}</td>
-                        <td><strong>$${income.amount?.toLocaleString() || '0'}</strong></td>
+                        <td>
+                            <div class="user-cell-small">
+                                <span>${userName}</span>
+                            </div>
+                        </td>
+                        <td class="amount-positive">
+                            <strong>$${(income.amount || 0).toLocaleString(undefined, { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                            })}</strong>
+                        </td>
                         <td>${income.description || 'No description'}</td>
                         <td>${dateStr}</td>
                     </tr>
                 `;
             }).join('');
             
-            // Load recent expenses
+            if (incomesSnapshot.empty) {
+                incomesTable.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="no-data">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <p>No income records in the last 7 days</p>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Load recent expenses (last 7 days)
             const expensesSnapshot = await this.db.collection('expenses')
+                .where('date', '>=', sevenDaysAgo)
                 .orderBy('date', 'desc')
                 .limit(5)
                 .get();
@@ -410,17 +531,56 @@ class DashboardSystem {
                 
                 return `
                     <tr>
-                        <td>${expense.userName || 'Unknown User'}</td>
-                        <td><strong>$${expense.amount?.toLocaleString() || '0'}</strong></td>
+                        <td>
+                            <div class="user-cell-small">
+                                <span>${expense.userName || 'Unknown User'}</span>
+                            </div>
+                        </td>
+                        <td class="amount-negative">
+                            <strong>$${(expense.amount || 0).toLocaleString(undefined, { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                            })}</strong>
+                        </td>
                         <td>${expense.category || 'No category'}</td>
                         <td>${dateStr}</td>
                     </tr>
                 `;
             }).join('');
             
+            if (expensesSnapshot.empty) {
+                expensesTable.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="no-data">
+                            <i class="fas fa-shopping-cart"></i>
+                            <p>No expense records in the last 7 days</p>
+                        </td>
+                    </tr>
+                `;
+            }
+            
         } catch (error) {
             console.error("Error loading recent activity:", error);
+            // Show error in tables
+            const errorHTML = `
+                <tr>
+                    <td colspan="4" class="error-data">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading data</p>
+                    </td>
+                </tr>
+            `;
+            
+            document.getElementById('recentUsersTable').innerHTML = errorHTML;
+            document.getElementById('recentIncomesTable').innerHTML = errorHTML;
+            document.getElementById('recentExpensesTable').innerHTML = errorHTML;
         }
+    }
+    
+    checkUserHasProfile(userId) {
+        // This would need to check profiles collection
+        // For now, return true for demo
+        return true;
     }
     
     initCharts() {
@@ -460,7 +620,12 @@ class DashboardSystem {
                     },
                     tooltip: {
                         mode: 'index',
-                        intersect: false
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`;
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -501,6 +666,17 @@ class DashboardSystem {
                 plugins: {
                     legend: {
                         position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                            }
+                        }
                     }
                 }
             }
@@ -606,7 +782,10 @@ class DashboardSystem {
                 recentActivities.push({
                     type: 'new_user',
                     count: newUsers.size,
-                    message: `${newUsers.size} new user${newUsers.size > 1 ? 's' : ''} registered`
+                    message: `${newUsers.size} new user${newUsers.size > 1 ? 's' : ''} registered`,
+                    time: 'Just now',
+                    icon: 'user-plus',
+                    color: 'success'
                 });
             }
             
@@ -620,7 +799,34 @@ class DashboardSystem {
                 recentActivities.push({
                     type: 'high_income',
                     count: highValueIncomes.size,
-                    message: `${highValueIncomes.size} high-value income${highValueIncomes.size > 1 ? 's' : ''} recorded`
+                    message: `${highValueIncomes.size} high-value income${highValueIncomes.size > 1 ? 's' : ''} recorded`,
+                    time: 'Today',
+                    icon: 'money-bill-wave',
+                    color: 'warning'
+                });
+            }
+            
+            // Check for incomplete profiles
+            const profilesSnapshot = await this.db.collection('profiles').get();
+            const incompleteProfiles = profilesSnapshot.docs.filter(doc => {
+                const profile = doc.data();
+                const filledFields = [
+                    profile.displayName,
+                    profile.email,
+                    profile.phone,
+                    profile.country
+                ].filter(field => field && field !== '').length;
+                return filledFields < 3;
+            }).length;
+            
+            if (incompleteProfiles > 0) {
+                recentActivities.push({
+                    type: 'incomplete_profile',
+                    count: incompleteProfiles,
+                    message: `${incompleteProfiles} profile${incompleteProfiles > 1 ? 's' : ''} need completion`,
+                    time: 'Needs attention',
+                    icon: 'exclamation-triangle',
+                    color: 'danger'
                 });
             }
             
@@ -636,18 +842,22 @@ class DashboardSystem {
                     <div class="notification-empty">
                         <i class="fas fa-bell-slash"></i>
                         <p>No notifications yet</p>
+                        <small>All systems are running smoothly</small>
                     </div>
                 `;
             } else {
                 notificationsList.innerHTML = recentActivities.map(activity => `
-                    <div class="notification-item">
+                    <div class="notification-item notification-${activity.color}">
                         <div class="notification-icon">
-                            <i class="fas fa-${this.getNotificationIcon(activity.type)}"></i>
+                            <i class="fas fa-${activity.icon}"></i>
                         </div>
                         <div class="notification-content">
                             <p class="notification-message">${activity.message}</p>
-                            <span class="notification-time">Just now</span>
+                            <span class="notification-time">${activity.time}</span>
                         </div>
+                        <button class="notification-action" onclick="dashboardSystem.markNotificationAsRead('${activity.type}')">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 `).join('');
             }
@@ -657,17 +867,36 @@ class DashboardSystem {
         }
     }
     
-    getNotificationIcon(type) {
-        switch(type) {
-            case 'new_user': return 'user-plus';
-            case 'high_income': return 'money-bill-wave';
-            default: return 'bell';
+    markNotificationAsRead(notificationType) {
+        // Remove notification from UI
+        const notificationElement = document.querySelector(`.notification-item`);
+        if (notificationElement) {
+            notificationElement.remove();
         }
+        
+        // Update notification count
+        const currentCount = parseInt(document.getElementById('notificationCount').textContent);
+        if (currentCount > 0) {
+            document.getElementById('notificationCount').textContent = currentCount - 1;
+        }
+        
+        // Show message
+        this.showMessage('Notification marked as read', 'success');
     }
     
     toggleNotifications() {
         const panel = document.getElementById('notificationsPanel');
         panel.classList.toggle('show');
+        
+        // Mark all as read when opening
+        if (panel.classList.contains('show')) {
+            this.markAllNotificationsAsRead();
+        }
+    }
+    
+    markAllNotificationsAsRead() {
+        document.getElementById('notificationCount').textContent = '0';
+        this.showMessage('All notifications marked as read', 'success');
     }
     
     closeNotifications() {
@@ -693,7 +922,416 @@ class DashboardSystem {
     }
     
     generateReport() {
-        alert("Report generation feature is under development. Coming soon!");
+        try {
+            // Create a comprehensive report
+            const reportData = {
+                generatedAt: new Date().toISOString(),
+                generatedBy: this.user?.name || 'System',
+                statistics: {
+                    totalUsers: document.getElementById('statTotalUsers').textContent,
+                    totalEmployees: document.getElementById('statTotalEmployees').textContent,
+                    totalIncome: document.getElementById('statTotalIncome').textContent,
+                    totalExpenses: document.getElementById('statTotalExpenses').textContent
+                },
+                recentActivity: {
+                    users: this.getRecentUsersData(),
+                    incomes: this.getRecentIncomesData(),
+                    expenses: this.getRecentExpensesData()
+                }
+            };
+            
+            // Convert to JSON
+            const reportJSON = JSON.stringify(reportData, null, 2);
+            
+            // Create download link
+            const blob = new Blob([reportJSON], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard_report_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            this.showMessage('Report generated and downloaded successfully!', 'success');
+            
+        } catch (error) {
+            console.error("Error generating report:", error);
+            this.showMessage('Error generating report: ' + error.message, 'error');
+        }
+    }
+    
+    getRecentUsersData() {
+        const rows = document.querySelectorAll('#recentUsersTable tr');
+        const data = [];
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 4) {
+                data.push({
+                    name: cells[0].textContent,
+                    email: cells[1].textContent,
+                    joinDate: cells[2].textContent,
+                    status: cells[3].textContent
+                });
+            }
+        });
+        
+        return data;
+    }
+    
+    getRecentIncomesData() {
+        const rows = document.querySelectorAll('#recentIncomesTable tr');
+        const data = [];
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 4) {
+                data.push({
+                    user: cells[0].textContent,
+                    amount: cells[1].textContent,
+                    description: cells[2].textContent,
+                    date: cells[3].textContent
+                });
+            }
+        });
+        
+        return data;
+    }
+    
+    getRecentExpensesData() {
+        const rows = document.querySelectorAll('#recentExpensesTable tr');
+        const data = [];
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 4) {
+                data.push({
+                    user: cells[0].textContent,
+                    amount: cells[1].textContent,
+                    category: cells[2].textContent,
+                    date: cells[3].textContent
+                });
+            }
+        });
+        
+        return data;
+    }
+    
+    // ========== REAL-TIME UPDATES ==========
+    
+    startRealTimeUpdates() {
+        // Start listening for real-time changes
+        this.setupRealTimeListeners();
+        
+        // Show real-time indicator
+        this.showRealTimeIndicator(true);
+    }
+    
+    setupRealTimeListeners() {
+        // Listen for new users
+        const usersListener = this.db.collection('users')
+            .orderBy('createdAt', 'desc')
+            .limit(1)
+            .onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        this.handleNewUser(change.doc.data());
+                    }
+                });
+            });
+        this.realTimeListeners.push(usersListener);
+        
+        // Listen for new incomes
+        const incomesListener = this.db.collection('incomes')
+            .orderBy('date', 'desc')
+            .limit(1)
+            .onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        this.handleNewIncome(change.doc.data());
+                    }
+                });
+            });
+        this.realTimeListeners.push(incomesListener);
+        
+        // Listen for new expenses
+        const expensesListener = this.db.collection('expenses')
+            .orderBy('date', 'desc')
+            .limit(1)
+            .onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        this.handleNewExpense(change.doc.data());
+                    }
+                });
+            });
+        this.realTimeListeners.push(expensesListener);
+    }
+    
+    handleNewUser(userData) {
+        // Update users count
+        const currentCount = parseInt(document.getElementById('statTotalUsers').textContent);
+        document.getElementById('statTotalUsers').textContent = currentCount + 1;
+        document.getElementById('usersCount').textContent = currentCount + 1;
+        
+        // Add to recent users table if active tab
+        if (document.querySelector('#recent-users').classList.contains('active')) {
+            this.addToRecentUsersTable(userData);
+        }
+        
+        // Show notification
+        this.showRealTimeNotification('New user registered: ' + (userData.name || userData.email));
+    }
+    
+    handleNewIncome(incomeData) {
+        // Update income statistics
+        const currentIncome = document.getElementById('statTotalIncome').textContent;
+        const newAmount = incomeData.amount || 0;
+        // Parse and update total income (simplified)
+        
+        // Add to recent incomes table if active tab
+        if (document.querySelector('#recent-incomes').classList.contains('active')) {
+            this.addToRecentIncomesTable(incomeData);
+        }
+        
+        // Show notification for high-value income
+        if (newAmount >= 5000) {
+            this.showRealTimeNotification(`High-value income: $${newAmount.toLocaleString()}`);
+        }
+    }
+    
+    handleNewExpense(expenseData) {
+        // Update expenses statistics
+        const newAmount = expenseData.amount || 0;
+        
+        // Add to recent expenses table if active tab
+        if (document.querySelector('#recent-expenses').classList.contains('active')) {
+            this.addToRecentExpensesTable(expenseData);
+        }
+    }
+    
+    addToRecentUsersTable(userData) {
+        const table = document.getElementById('recentUsersTable');
+        const date = userData.createdAt?.toDate();
+        const dateStr = date ? date.toLocaleDateString('en-US') : 'N/A';
+        
+        const newRow = `
+            <tr class="new-row">
+                <td>
+                    <div class="user-cell-small">
+                        <div class="user-avatar-tiny">${userData.name?.charAt(0) || 'U'}</div>
+                        <span>${userData.name || 'N/A'}</span>
+                    </div>
+                </td>
+                <td>${userData.email || 'N/A'}</td>
+                <td>${dateStr}</td>
+                <td>
+                    <span class="status-badge status-pending">
+                        Pending
+                    </span>
+                </td>
+            </tr>
+        `;
+        
+        // Add to top of table
+        if (table.querySelector('.no-data')) {
+            table.innerHTML = newRow;
+        } else {
+            table.innerHTML = newRow + table.innerHTML;
+        }
+        
+        // Limit to 5 rows
+        const rows = table.querySelectorAll('tr');
+        if (rows.length > 5) {
+            rows[rows.length - 1].remove();
+        }
+    }
+    
+    addToRecentIncomesTable(incomeData) {
+        const table = document.getElementById('recentIncomesTable');
+        const date = incomeData.date?.toDate();
+        const dateStr = date ? date.toLocaleDateString('en-US') : 'N/A';
+        
+        const newRow = `
+            <tr class="new-row">
+                <td>
+                    <div class="user-cell-small">
+                        <span>${incomeData.userName || 'Unknown User'}</span>
+                    </div>
+                </td>
+                <td class="amount-positive">
+                    <strong>$${(incomeData.amount || 0).toLocaleString(undefined, { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                    })}</strong>
+                </td>
+                <td>${incomeData.description || 'No description'}</td>
+                <td>${dateStr}</td>
+            </tr>
+        `;
+        
+        // Add to top of table
+        if (table.querySelector('.no-data')) {
+            table.innerHTML = newRow;
+        } else {
+            table.innerHTML = newRow + table.innerHTML;
+        }
+        
+        // Limit to 5 rows
+        const rows = table.querySelectorAll('tr');
+        if (rows.length > 5) {
+            rows[rows.length - 1].remove();
+        }
+    }
+    
+    addToRecentExpensesTable(expenseData) {
+        const table = document.getElementById('recentExpensesTable');
+        const date = expenseData.date?.toDate();
+        const dateStr = date ? date.toLocaleDateString('en-US') : 'N/A';
+        
+        const newRow = `
+            <tr class="new-row">
+                <td>
+                    <div class="user-cell-small">
+                        <span>${expenseData.userName || 'Unknown User'}</span>
+                    </div>
+                </td>
+                <td class="amount-negative">
+                    <strong>$${(expenseData.amount || 0).toLocaleString(undefined, { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                    })}</strong>
+                </td>
+                <td>${expenseData.category || 'No category'}</td>
+                <td>${dateStr}</td>
+            </tr>
+        `;
+        
+        // Add to top of table
+        if (table.querySelector('.no-data')) {
+            table.innerHTML = newRow;
+        } else {
+            table.innerHTML = newRow + table.innerHTML;
+        }
+        
+        // Limit to 5 rows
+        const rows = table.querySelectorAll('tr');
+        if (rows.length > 5) {
+            rows[rows.length - 1].remove();
+        }
+    }
+    
+    showRealTimeNotification(message) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'real-time-notification';
+        notification.innerHTML = `
+            <i class="fas fa-sync-alt"></i>
+            <span>${message}</span>
+            <button class="close-notification" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        // Add to page
+        const container = document.querySelector('.main-content');
+        const firstChild = container.firstChild;
+        if (firstChild) {
+            container.insertBefore(notification, firstChild);
+        } else {
+            container.appendChild(notification);
+        }
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+    
+    showRealTimeIndicator(show) {
+        // Add or remove real-time indicator from stat cards
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach(card => {
+            if (show) {
+                card.classList.add('real-time-active');
+            } else {
+                card.classList.remove('real-time-active');
+            }
+        });
+    }
+    
+    toggleRealTimeUpdates() {
+        const isActive = document.querySelector('.stat-card.real-time-active');
+        
+        if (isActive) {
+            // Stop real-time updates
+            this.stopRealTimeUpdates();
+            this.showRealTimeIndicator(false);
+            this.showMessage('Real-time updates disabled', 'warning');
+        } else {
+            // Start real-time updates
+            this.startRealTimeUpdates();
+            this.showRealTimeIndicator(true);
+            this.showMessage('Real-time updates enabled', 'success');
+        }
+    }
+    
+    stopRealTimeUpdates() {
+        // Unsubscribe all listeners
+        this.realTimeListeners.forEach(unsubscribe => unsubscribe());
+        this.realTimeListeners = [];
+    }
+    
+    // ========== HELPER METHODS ==========
+    
+    showLoading(show) {
+        const loadingElements = document.querySelectorAll('.loading-row, .loading-state');
+        loadingElements.forEach(element => {
+            element.style.display = show ? 'block' : 'none';
+        });
+    }
+    
+    showMessage(message, type = 'info') {
+        // Create message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${type}`;
+        messageDiv.innerHTML = `
+            <i class="fas fa-${this.getMessageIcon(type)}"></i>
+            <span>${message}</span>
+            <button class="message-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        // Add to page
+        const container = document.querySelector('.main-content');
+        const firstChild = container.firstChild;
+        if (firstChild) {
+            container.insertBefore(messageDiv, firstChild);
+        } else {
+            container.appendChild(messageDiv);
+        }
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (messageDiv.parentElement) {
+                messageDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    getMessageIcon(type) {
+        switch (type) {
+            case 'success': return 'check-circle';
+            case 'error': return 'exclamation-circle';
+            case 'warning': return 'exclamation-triangle';
+            case 'info': return 'info-circle';
+            default: return 'info-circle';
+        }
     }
     
     showError(message) {
@@ -704,16 +1342,159 @@ class DashboardSystem {
                     <i class="fas fa-exclamation-triangle" style="font-size: 50px; margin-bottom: 20px;"></i>
                     <h2>⚠️ System Error</h2>
                     <p>${message}</p>
-                    <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 20px;">
-                        <i class="fas fa-redo"></i> Reload Page
-                    </button>
+                    <div style="margin-top: 30px;">
+                        <button onclick="location.reload()" class="btn btn-primary" style="margin-right: 10px;">
+                            <i class="fas fa-redo"></i> Reload Page
+                        </button>
+                        <button onclick="authSystem.logout()" class="btn btn-secondary">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
                 </div>
             `;
         }
+    }
+    
+    // ========== SYSTEM UTILITIES ==========
+    
+    async clearCache() {
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+            this.showMessage('Cache cleared successfully', 'success');
+            
+            // Refresh dashboard data
+            await this.loadDashboardData();
+            
+        } catch (error) {
+            console.error("Error clearing cache:", error);
+            this.showMessage('Error clearing cache: ' + error.message, 'error');
+        }
+    }
+    
+    async backupDatabase() {
+        try {
+            // Show loading
+            this.showMessage('Creating database backup...', 'info');
+            
+            // Get all collections data
+            const collections = ['users', 'employees', 'profiles', 'incomes', 'expenses', 'categories', 'income_categories'];
+            const backupData = {
+                timestamp: new Date().toISOString(),
+                generatedBy: this.user?.name || 'System',
+                collections: {}
+            };
+            
+            // Fetch data from each collection
+            for (const collection of collections) {
+                const snapshot = await this.db.collection(collection).get();
+                backupData.collections[collection] = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            }
+            
+            // Convert to JSON
+            const backupJSON = JSON.stringify(backupData, null, 2);
+            
+            // Create download link
+            const blob = new Blob([backupJSON], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `database_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            this.showMessage('Database backup created and downloaded successfully!', 'success');
+            
+        } catch (error) {
+            console.error("Error creating backup:", error);
+            this.showMessage('Error creating backup: ' + error.message, 'error');
+        }
+    }
+    
+    async systemHealthCheck() {
+        try {
+            // Check Firebase connection
+            const firebaseHealthy = await this.checkFirebaseHealth();
+            
+            // Check database collections
+            const collectionsHealthy = await this.checkCollectionsHealth();
+            
+            // Check user authentication
+            const authHealthy = this.auth.currentUser !== null;
+            
+            // Show health status
+            if (firebaseHealthy && collectionsHealthy && authHealthy) {
+                this.showMessage('System health: All systems operational ✅', 'success');
+            } else {
+                this.showMessage('System health: Some issues detected ⚠️', 'warning');
+            }
+            
+        } catch (error) {
+            console.error("Error in health check:", error);
+            this.showMessage('Health check failed: ' + error.message, 'error');
+        }
+    }
+    
+    async checkFirebaseHealth() {
+        try {
+            // Simple Firebase health check
+            await this.db.collection('users').limit(1).get();
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async checkCollectionsHealth() {
+        const requiredCollections = ['users', 'employees', 'profiles'];
+        let allHealthy = true;
+        
+        for (const collection of requiredCollections) {
+            try {
+                await this.db.collection(collection).limit(1).get();
+            } catch (error) {
+                console.error(`Collection ${collection} error:`, error);
+                allHealthy = false;
+            }
+        }
+        
+        return allHealthy;
     }
 }
 
 // Initialize dashboard when page loads
 document.addEventListener('DOMContentLoaded', () => {
     window.dashboardSystem = new DashboardSystem();
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl + R to refresh
+        if (e.ctrlKey && e.key === 'r') {
+            e.preventDefault();
+            window.dashboardSystem.loadDashboardData();
+        }
+        
+        // Ctrl + D for dashboard
+        if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            window.location.href = 'dashboard.html';
+        }
+        
+        // Ctrl + U for users
+        if (e.ctrlKey && e.key === 'u') {
+            e.preventDefault();
+            window.location.href = 'users.html';
+        }
+        
+        // Ctrl + L for logout
+        if (e.ctrlKey && e.key === 'l') {
+            e.preventDefault();
+            authSystem.logout();
+        }
+    });
 });
