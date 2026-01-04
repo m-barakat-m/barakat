@@ -4,25 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login -  MyMoney</title>
+    <title>Login - Money Manager Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="png" href="Logo_app_48.png">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
 </head>
 <body class="login-page">
     <div class="login-container">
         <div class="login-card">
             <!-- Logo Section -->
             <div class="logo-section">
-                <img src="Logo_app_72.png" alt="" class="app-logo">
+                <img src="logo_app_96.png" alt="Money Manager Logo" class="app-logo">
                 <div class="app-info">
-                    <h1>MyMoney</h1>
-                    <p>Welcome .. !! </p>
+                    <h1>Money Manager</h1>
+                    <p>Administrator Dashboard</p>
                 </div>
             </div>
 
             <div class="login-header">
-                <h2> Login Screen</h2>
+                <h2>Administrator Login</h2>
+                <p>System administrators only</p>
             </div>
 
             <form id="loginForm">
@@ -50,6 +51,19 @@
                     <i class="fas fa-sign-in-alt"></i>
                     Sign In
                 </button>
+
+                <div class="login-footer">
+                    <p class="error-message" id="errorMessage"></p>
+                    <p class="footer-note">
+                        <i class="fas fa-shield-alt"></i>
+                        Administrator access only. 
+                        <br>
+                        <small>
+                            Admins are created via Firebase Console.
+                            Contact system administrator for access.
+                        </small>
+                    </p>
+                </div>
             </form>
         </div>
     </div>
@@ -60,6 +74,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- Configuration -->
+     <script src="config.js"></script>
     <script src="firebase-config.js"></script>
     <script>
         // Initialize Firebase
@@ -71,18 +86,18 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
-                    // Check if user is an active employee
+                    // Check if user is an admin
                     const employeeDoc = await db.collection('employees').doc(user.uid).get();
                     
                     if (employeeDoc.exists) {
                         const employeeData = employeeDoc.data();
                         
-                        // ✅ ALLOW ALL ACTIVE EMPLOYEES (NOT JUST ADMINS)
-                        if (employeeData.status !== 'active') {
-                            await auth.signOut();
-                            showError('Account is inactive. Contact administrator.');
-                        } else {
+                        // Only allow admins to login
+                        if (employeeData.role === 'Admin' && employeeData.status === 'active') {
                             window.location.href = 'dashboard.html';
+                        } else {
+                            await auth.signOut();
+                            showError('Access restricted to administrators only.');
                         }
                     } else {
                         await auth.signOut();
@@ -121,7 +136,7 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const userId = userCredential.user.uid;
                 
-                // Verify employee status
+                // Verify admin status
                 const employeeDoc = await db.collection('employees').doc(userId).get();
                 
                 if (!employeeDoc.exists) {
@@ -132,10 +147,16 @@
                 
                 const employeeData = employeeDoc.data();
                 
-                // ✅ ALLOW ALL ACTIVE EMPLOYEES (NOT JUST ADMINS)
+                // STRICT: Only admins can login
+                if (employeeData.role !== 'Admin') {
+                    await auth.signOut();
+                    showError('Access restricted to administrators only.');
+                    return;
+                }
+                
                 if (employeeData.status !== 'active') {
                     await auth.signOut();
-                    showError('Account is inactive. Contact administrator.');
+                    showError('Account is inactive.');
                     return;
                 }
                 
