@@ -1,0 +1,338 @@
+/* ===== INCOMES PAGE STYLES ===== */
+
+/* Income-specific icons */
+.stat-icon.total {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-icon.avg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-icon.transactions {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-icon.category {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* Date Range Picker */
+.date-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-input {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    min-width: 140px;
+}
+
+.date-separator {
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+/* Total Amount in Table Header */
+.total-amount {
+    margin-left: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Checkbox Label */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+}
+
+.checkbox-label i {
+    color: var(--warning-color);
+}
+
+/* Favorite Star */
+.favorite-star {
+    color: var(--warning-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.favorite-star:hover {
+    transform: scale(1.2);
+}
+
+.favorite-star.active {
+    color: gold;
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Amount Cell Styles */
+.amount-cell {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.amount-cell.positive {
+    color: var(--success-color);
+}
+
+/* Category Badges */
+.category-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: 1px solid #e2e8f0;
+}
+
+/* User Avatar in Table */
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--tertiary-color));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+}
+
+/* Textarea Styling */
+textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.3s;
+}
+
+textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(1, 129, 89, 0.1);
+    outline: none;
+}
+
+/* Income Details View */
+.income-details-view {
+    padding: 0.5rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.detail-value.amount {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--success-color);
+}
+
+/* Quick Actions */
+.quick-actions-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.quick-action-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quick-action-btn:hover {
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+}
+
+.quick-action-btn i {
+    font-size: 1.25rem;
+}
+
+.quick-action-btn span {
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+/* Bulk Actions */
+.bulk-actions {
+    display: none;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-hover);
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+}
+
+.bulk-actions.show {
+    display: flex;
+}
+
+.bulk-selected-count {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Responsive Design for Incomes Page */
+@media (max-width: 1200px) {
+    .filter-controls {
+        flex-wrap: wrap;
+    }
+    
+    .date-range {
+        width: 100%;
+        justify-content: center;
+        margin: 0.5rem 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .date-range {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .date-separator {
+        text-align: center;
+    }
+    
+    .total-amount {
+        display: block;
+        margin: 0.5rem 0;
+        text-align: center;
+    }
+    
+    .quick-actions-bar {
+        flex-wrap: wrap;
+    }
+    
+    .quick-action-btn {
+        min-width: calc(50% - 0.5rem);
+    }
+}
+
+@media (max-width: 576px) {
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .quick-action-btn {
+        min-width: 100%;
+    }
+    
+    .bulk-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* Animation for new income entries */
+@keyframes highlightNew {
+    0% {
+        background-color: rgba(72, 187, 120, 0.3);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.new-income {
+    animation: highlightNew 2s ease-out;
+}
+
+/* Loading animation for charts */
+.chart-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+}
+
+[data-theme="dark"] .chart-loading {
+    background: rgba(45, 55, 72, 0.8);
+}
+
+/* Export button animation */
+@keyframes exportPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+#exportBtn:active {
+    animation: exportPulse 0.3s ease-in-out;
+}
