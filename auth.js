@@ -1,4 +1,3 @@
-
 // Auth System - ALL EMPLOYEES ACCESS CONTROL
 class AuthSystem {
     constructor() {
@@ -12,9 +11,26 @@ class AuthSystem {
 
     async init() {
         try {
-            // Initialize Firebase
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
+            // Check if Firebase is loaded
+            if (typeof firebase === 'undefined') {
+                console.error("❌ Firebase is not loaded!");
+                return;
+            }
+            
+            // Wait for firebaseConfig to be available
+            if (!window.firebaseConfig) {
+                console.warn("⏳ Waiting for firebaseConfig...");
+                // Retry after 500ms
+                setTimeout(() => this.init(), 500);
+                return;
+            }
+            
+            // Initialize Firebase if not already initialized
+            if (firebase.apps.length === 0) {
+                console.log("🚀 Initializing Firebase...");
+                firebase.initializeApp(window.firebaseConfig);
+            } else {
+                console.log("✅ Firebase already initialized");
             }
             
             this.auth = firebase.auth();
@@ -35,7 +51,7 @@ class AuthSystem {
             // Setup activity tracking
             this.setupActivityTracking();
             
-            console.log("✅ Auth System initialized");
+            console.log("✅ Auth System initialized successfully");
             
         } catch (error) {
             console.error("❌ Auth system initialization error:", error);
@@ -310,6 +326,16 @@ class AuthSystem {
                 throw new Error(`Too many login attempts. Please try again in ${rateLimit.retryAfter} seconds`);
             }
             
+            // Ensure Firebase is initialized
+            if (!this.auth) {
+                console.warn('Firebase auth not ready, trying to reinitialize...');
+                await this.init();
+                
+                if (!this.auth) {
+                    throw new Error('Authentication system not ready. Please refresh the page.');
+                }
+            }
+            
             // Firebase authentication
             const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
             const user = userCredential.user;
@@ -360,8 +386,14 @@ class AuthSystem {
                 case 'auth/network-request-failed':
                     errorMessage = 'Network error. Check your connection.';
                     break;
+                case 'auth/app-not-authorized':
+                    errorMessage = 'Authentication not configured. Contact administrator.';
+                    break;
+                case 'auth/invalid-api-key':
+                    errorMessage = 'Invalid configuration. Contact administrator.';
+                    break;
                 default:
-                    errorMessage += 'Please try again.';
+                    errorMessage += error.message || 'Please try again.';
             }
             
             return {
@@ -378,11 +410,14 @@ class AuthSystem {
     
     async logout() {
         try {
-            await this.auth.signOut();
+            if (this.auth) {
+                await this.auth.signOut();
+            }
             this.handleLogout();
             window.location.href = 'index.html';
         } catch (error) {
             console.error('Logout error:', error);
+            this.handleLogout();
             window.location.href = 'index.html';
         }
     }
@@ -450,6 +485,15 @@ class AuthSystem {
         return this.currentUser !== null;
     }
     
+    // Get auth and db instances for external use
+    getAuth() {
+        return this.auth;
+    }
+    
+    getDB() {
+        return this.db;
+    }
+    
     // Static methods for backward compatibility
     static getUserFromStorage() {
         try {
@@ -481,5 +525,21 @@ class AuthSystem {
     }
 }
 
-// Create global instance
-window.authSystem = new AuthSystem();
+// Create global instance with delay to ensure dependencies are loaded
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        window.authSystem = new AuthSystem();
+    }, 100);
+});
+
+// Fallback for immediate access
+if (!window.authSystem) {
+    window.authSystem = {
+        login: async () => ({ success: false, error: 'Loading...' }),
+        logout: async () => window.location.href = 'index.html',
+        checkAuth: async () => ({ authenticated: false }),
+        getCurrentUser: () => null,
+        getAuth: () => null,
+        getDB: () => null
+    };
+}
