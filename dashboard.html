@@ -6,7 +6,7 @@
     <title>Dashboard - Money Manager Admin</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/png" href="Logo_app_96.png">
+    <link rel="icon" type="image/png" href="logo_app_96.png">
     <!-- Chart.js for statistics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -15,10 +15,10 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                <img src="Logo_app_96.png" alt="Logo" class="nav-logo">
+                <img src="logo_app_96.png" alt="Logo" class="nav-logo">
                 <div class="brand-text">
-                    <span class="brand-name">MyMony</span>
-                    <span class="brand-subtitle">Dashboard</span>
+                    <span class="brand-name">Money Manager</span>
+                    <span class="brand-subtitle">Admin Dashboard</span>
                 </div>
             </div>
             
@@ -302,122 +302,121 @@
                 </div>
             </div>
 
-<div class="quick-actions">
-    <h3>Quick Actions</h3>
-    <div class="actions-grid">
-        <button class="action-card" id="addUserBtn">
-            <i class="fas fa-user-plus"></i>
-            <span>Add New User</span>
-        </button>
-        <button class="action-card" id="addEmployeeBtn">
-            <i class="fas fa-user-tie"></i>
-            <span>Add Employee</span>
-        </button>
-        <button class="action-card" id="addIncomeBtn">
-            <i class="fas fa-money-bill-wave"></i>
-            <span>Record Income</span>
-        </button>
-        <button class="action-card" id="addExpenseBtn">
-            <i class="fas fa-receipt"></i>
-            <span>Record Expense</span>
-        </button>
-        <!-- إضافة الأزرار الجديدة -->
-        <button class="action-card" id="manageBudgetsBtn">
-            <i class="fas fa-chart-pie"></i>
-            <span>Manage Budgets</span>
-        </button>
-        <button class="action-card" id="manageGoalsBtn">
-            <i class="fas fa-bullseye"></i>
-            <span>Manage Goals</span>
-        </button>
-        <button class="action-card" id="viewNotificationsBtn">
-            <i class="fas fa-bell"></i>
-            <span>View Notifications</span>
-            <span class="badge" id="dashboardNotificationCount">0</span>
-        </button>
-        <button class="action-card" id="generateReportBtn">
-            <i class="fas fa-chart-pie"></i>
-            <span>Generate Report</span>
-        </button>
-        <button class="action-card" id="systemSettingsBtn">
-            <i class="fas fa-cogs"></i>
-            <span>System Settings</span>
-        </button>
-    </div>
-</div>
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="actions-grid">
+                    <button class="action-card" id="addUserBtn">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add New User</span>
+                    </button>
+                    <button class="action-card" id="addEmployeeBtn">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Add Employee</span>
+                    </button>
+                    <button class="action-card" id="addIncomeBtn">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Record Income</span>
+                    </button>
+                    <button class="action-card" id="addExpenseBtn">
+                        <i class="fas fa-receipt"></i>
+                        <span>Record Expense</span>
+                    </button>
+                    <button class="action-card" id="manageBudgetsBtn">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Manage Budgets</span>
+                    </button>
+                    <button class="action-card" id="manageGoalsBtn">
+                        <i class="fas fa-bullseye"></i>
+                        <span>Manage Goals</span>
+                    </button>
+                    <button class="action-card" id="viewNotificationsBtn">
+                        <i class="fas fa-bell"></i>
+                        <span>View Notifications</span>
+                        <span class="badge" id="dashboardNotificationCount">0</span>
+                    </button>
+                    <button class="action-card" id="generateReportBtn">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Generate Report</span>
+                    </button>
+                    <button class="action-card" id="systemSettingsBtn">
+                        <i class="fas fa-cogs"></i>
+                        <span>System Settings</span>
+                    </button>
+                </div>
+            </div>
 
-<!-- إضافة قسم Insights بعد Quick Actions -->
-<!-- Smart Insights -->
-<div class="insights-section">
-    <div class="section-header">
-        <h3><i class="fas fa-lightbulb"></i> Smart Insights</h3>
-        <button class="btn btn-secondary" id="refreshInsightsBtn">
-            <i class="fas fa-redo"></i> Refresh
-        </button>
-    </div>
-    
-    <div class="insights-grid" id="insightsGrid">
-        <div class="insight-card">
-            <div class="insight-header">
-                <div class="insight-icon">
-                    <i class="fas fa-chart-line"></i>
+            <!-- Smart Insights -->
+            <div class="insights-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-lightbulb"></i> Smart Insights</h3>
+                    <button class="btn btn-secondary" id="refreshInsightsBtn">
+                        <i class="fas fa-redo"></i> Refresh
+                    </button>
                 </div>
-                <div>
-                    <h4>Spending Trend</h4>
-                    <span class="insight-tag positive">+12%</span>
-                </div>
-            </div>
-            <div class="insight-content">
-                <p>Your spending increased by 12% compared to last month. Food expenses saw the highest increase.</p>
-            </div>
-            <div class="insight-actions">
-                <button class="btn btn-sm btn-primary" onclick="window.location.href='expenses.html'">
-                    View Details
-                </button>
-            </div>
-        </div>
+                
+                <div class="insights-grid" id="insightsGrid">
+                    <div class="insight-card">
+                        <div class="insight-header">
+                            <div class="insight-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <h4>Spending Trend</h4>
+                                <span class="insight-tag positive">+12%</span>
+                            </div>
+                        </div>
+                        <div class="insight-content">
+                            <p>Your spending increased by 12% compared to last month. Food expenses saw the highest increase.</p>
+                        </div>
+                        <div class="insight-actions">
+                            <button class="btn btn-sm btn-primary" onclick="window.location.href='expenses.html'">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
 
-        <div class="insight-card">
-            <div class="insight-header">
-                <div class="insight-icon">
-                    <i class="fas fa-piggy-bank"></i>
-                </div>
-                <div>
-                    <h4>Savings Opportunity</h4>
-                    <span class="insight-tag warning">Potential</span>
-                </div>
-            </div>
-            <div class="insight-content">
-                <p>You could save $150/month by reducing entertainment and dining out expenses by 20%.</p>
-            </div>
-            <div class="insight-actions">
-                <button class="btn btn-sm btn-primary" onclick="window.location.href='budgets.html'">
-                    Set Budget
-                </button>
-            </div>
-        </div>
+                    <div class="insight-card">
+                        <div class="insight-header">
+                            <div class="insight-icon">
+                                <i class="fas fa-piggy-bank"></i>
+                            </div>
+                            <div>
+                                <h4>Savings Opportunity</h4>
+                                <span class="insight-tag warning">Potential</span>
+                            </div>
+                        </div>
+                        <div class="insight-content">
+                            <p>You could save $150/month by reducing entertainment and dining out expenses by 20%.</p>
+                        </div>
+                        <div class="insight-actions">
+                            <button class="btn btn-sm btn-primary" onclick="window.location.href='budgets.html'">
+                                Set Budget
+                            </button>
+                        </div>
+                    </div>
 
-        <div class="insight-card">
-            <div class="insight-header">
-                <div class="insight-icon">
-                    <i class="fas fa-bullseye"></i>
+                    <div class="insight-card">
+                        <div class="insight-header">
+                            <div class="insight-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <div>
+                                <h4>Goal Progress</h4>
+                                <span class="insight-tag success">65%</span>
+                            </div>
+                        </div>
+                        <div class="insight-content">
+                            <p>You're 65% towards your emergency fund goal. At this rate, you'll reach it in 3 months.</p>
+                        </div>
+                        <div class="insight-actions">
+                            <button class="btn btn-sm btn-primary" onclick="window.location.href='goals.html'">
+                                View Goals
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <h4>Goal Progress</h4>
-                    <span class="insight-tag success">65%</span>
-                </div>
             </div>
-            <div class="insight-content">
-                <p>You're 65% towards your emergency fund goal. At this rate, you'll reach it in 3 months.</p>
-            </div>
-            <div class="insight-actions">
-                <button class="btn btn-sm btn-primary" onclick="window.location.href='goals.html'">
-                    View Goals
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
         </main>
     </div>
 
@@ -446,6 +445,535 @@
     <script src="config.js"></script>
     <script src="firebase-config.js"></script>
     <script src="auth.js"></script>
-    <script src="dashboard.js"></script>
+    
+    <!-- Dashboard Script -->
+    <script>
+        console.log('📊 Dashboard page loaded');
+        
+        // Global variables
+        let auth, db;
+        let currentUser = null;
+        let authChecked = false;
+        
+        // Initialize dashboard
+        async function initializeDashboard() {
+            console.log('🔄 Initializing dashboard...');
+            
+            try {
+                // Check if we should be here
+                if (window.location.pathname.includes('dashboard.html')) {
+                    console.log('📍 Properly on dashboard page');
+                }
+                
+                // Wait for authSystem to be ready
+                if (window.authSystem) {
+                    console.log('✅ authSystem found');
+                    
+                    // Get auth and db from authSystem
+                    auth = window.authSystem.getAuth();
+                    db = window.authSystem.getDB();
+                    
+                    if (auth && db) {
+                        console.log('✅ Got auth and db from authSystem');
+                        await checkAuthentication();
+                    } else {
+                        console.warn('⚠️ authSystem not fully ready, initializing manually...');
+                        await initializeFirebaseManually();
+                    }
+                } else {
+                    console.warn('⚠️ authSystem not found, initializing manually...');
+                    await initializeFirebaseManually();
+                }
+                
+            } catch (error) {
+                console.error('❌ Dashboard initialization error:', error);
+                showError('Failed to initialize dashboard. Please refresh.');
+            }
+        }
+        
+        async function initializeFirebaseManually() {
+            console.log('⚡ Initializing Firebase manually...');
+            
+            // Check if Firebase is loaded
+            if (typeof firebase === 'undefined') {
+                console.error('❌ Firebase not loaded');
+                redirectToLogin();
+                return;
+            }
+            
+            // Check if config is available
+            if (!window.firebaseConfig) {
+                console.error('❌ Firebase config not loaded');
+                redirectToLogin();
+                return;
+            }
+            
+            try {
+                // Initialize Firebase if not already initialized
+                if (!firebase.apps.length) {
+                    console.log('🚀 Initializing Firebase app...');
+                    firebase.initializeApp(window.firebaseConfig);
+                } else {
+                    console.log('✅ Firebase already initialized');
+                }
+                
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                console.log('✅ Firebase initialized successfully');
+                await checkAuthentication();
+                
+            } catch (error) {
+                console.error('❌ Firebase manual initialization error:', error);
+                redirectToLogin();
+            }
+        }
+        
+        async function checkAuthentication() {
+            console.log('🔐 Checking authentication...');
+            
+            if (authChecked) {
+                console.log('✅ Authentication already checked');
+                return;
+            }
+            
+            try {
+                // Check auth state
+                auth.onAuthStateChanged(async (user) => {
+                    console.log('🔄 Auth state changed:', user ? 'User present' : 'No user');
+                    
+                    if (!user) {
+                        console.log('👤 No authenticated user, redirecting to login...');
+                        redirectToLogin();
+                        return;
+                    }
+                    
+                    // User is authenticated, verify employee status
+                    console.log('👤 User authenticated:', user.email);
+                    
+                    try {
+                        const employeeDoc = await db.collection('employees').doc(user.uid).get();
+                        
+                        if (!employeeDoc.exists) {
+                            console.error('❌ Employee not found in database');
+                            await auth.signOut();
+                            redirectToLogin();
+                            return;
+                        }
+                        
+                        const employeeData = employeeDoc.data();
+                        console.log('📋 Employee data loaded:', {
+                            name: employeeData.name,
+                            role: employeeData.role,
+                            status: employeeData.status
+                        });
+                        
+                        if (employeeData.status !== 'active') {
+                            console.error('❌ Employee account inactive');
+                            await auth.signOut();
+                            redirectToLogin();
+                            return;
+                        }
+                        
+                        // Set current user
+                        currentUser = {
+                            id: user.uid,
+                            email: user.email,
+                            ...employeeData
+                        };
+                        
+                        console.log('✅ User verified successfully:', currentUser.email);
+                        
+                        // Mark auth as checked
+                        authChecked = true;
+                        
+                        // Initialize dashboard UI
+                        initializeDashboardUI();
+                        
+                    } catch (error) {
+                        console.error('❌ Error verifying employee:', error);
+                        redirectToLogin();
+                    }
+                });
+                
+                // Also check current user immediately
+                const user = auth.currentUser;
+                if (!user) {
+                    console.log('👤 No current user, waiting for auth state change...');
+                } else {
+                    console.log('👤 Current user found:', user.email);
+                }
+                
+            } catch (error) {
+                console.error('❌ Authentication check error:', error);
+                redirectToLogin();
+            }
+        }
+        
+        function initializeDashboardUI() {
+            console.log('🎨 Initializing dashboard UI...');
+            
+            try {
+                // Update user info
+                if (currentUser) {
+                    document.getElementById('userName').textContent = currentUser.name || currentUser.email;
+                    document.getElementById('userRole').textContent = currentUser.role || 'Employee';
+                    document.getElementById('greetingName').textContent = currentUser.name?.split(' ')[0] || currentUser.email.split('@')[0];
+                    
+                    // Format last login time
+                    if (currentUser.lastLogin) {
+                        const lastLogin = currentUser.lastLogin.toDate();
+                        document.getElementById('lastLoginTime').textContent = 
+                            lastLogin.toLocaleDateString() + ' at ' + lastLogin.toLocaleTimeString();
+                    }
+                }
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                // Load dashboard data
+                loadDashboardData();
+                
+                console.log('✅ Dashboard UI initialized');
+                
+            } catch (error) {
+                console.error('❌ Dashboard UI initialization error:', error);
+            }
+        }
+        
+        function setupEventListeners() {
+            console.log('🔗 Setting up event listeners...');
+            
+            // Logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    console.log('🚪 Logout requested');
+                    
+                    try {
+                        if (window.authSystem) {
+                            await window.authSystem.logout();
+                        } else if (auth) {
+                            await auth.signOut();
+                        }
+                        redirectToLogin();
+                    } catch (error) {
+                        console.error('❌ Logout error:', error);
+                        redirectToLogin();
+                    }
+                });
+            }
+            
+            // Notifications button
+            const notificationsBtn = document.getElementById('notificationsBtn');
+            if (notificationsBtn) {
+                notificationsBtn.addEventListener('click', () => {
+                    console.log('🔔 Notifications clicked');
+                    toggleNotificationsPanel();
+                });
+            }
+            
+            // Close notifications button
+            const closeNotificationsBtn = document.getElementById('closeNotificationsBtn');
+            if (closeNotificationsBtn) {
+                closeNotificationsBtn.addEventListener('click', () => {
+                    console.log('❌ Closing notifications');
+                    closeNotificationsPanel();
+                });
+            }
+            
+            // Refresh activity button
+            const refreshActivityBtn = document.getElementById('refreshActivityBtn');
+            if (refreshActivityBtn) {
+                refreshActivityBtn.addEventListener('click', () => {
+                    console.log('🔄 Refreshing activity');
+                    loadRecentActivity();
+                });
+            }
+            
+            // Tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.getAttribute('data-tab');
+                    console.log('📁 Switching to tab:', tab);
+                    switchTab(tab);
+                });
+            });
+            
+            // Quick action buttons
+            document.querySelectorAll('.action-card').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('id');
+                    console.log('⚡ Quick action:', id);
+                    handleQuickAction(id);
+                });
+            });
+            
+            console.log('✅ Event listeners setup complete');
+        }
+        
+        function redirectToLogin() {
+            console.log('🔀 Redirecting to login page...');
+            window.location.href = 'index.html';
+        }
+        
+        function toggleNotificationsPanel() {
+            const panel = document.getElementById('notificationsPanel');
+            if (panel) {
+                panel.classList.toggle('show');
+            }
+        }
+        
+        function closeNotificationsPanel() {
+            const panel = document.getElementById('notificationsPanel');
+            if (panel) {
+                panel.classList.remove('show');
+            }
+        }
+        
+        function switchTab(tabId) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Remove active class from all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to selected tab
+            const activeTabBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+            if (activeTabBtn) {
+                activeTabBtn.classList.add('active');
+            }
+            
+            // Show selected tab content
+            const activeTabContent = document.getElementById(tabId);
+            if (activeTabContent) {
+                activeTabContent.classList.add('active');
+            }
+            
+            // Load data for the tab if needed
+            loadTabData(tabId);
+        }
+        
+        function handleQuickAction(actionId) {
+            console.log('⚡ Handling quick action:', actionId);
+            
+            const actions = {
+                'addUserBtn': () => window.location.href = 'users.html?action=add',
+                'addEmployeeBtn': () => window.location.href = 'employees.html?action=add',
+                'addIncomeBtn': () => window.location.href = 'incomes.html?action=add',
+                'addExpenseBtn': () => window.location.href = 'expenses.html?action=add',
+                'manageBudgetsBtn': () => alert('Budget management coming soon!'),
+                'manageGoalsBtn': () => alert('Goal management coming soon!'),
+                'viewNotificationsBtn': () => toggleNotificationsPanel(),
+                'generateReportBtn': () => alert('Report generation coming soon!'),
+                'systemSettingsBtn': () => window.location.href = 'preferences.html'
+            };
+            
+            if (actions[actionId]) {
+                actions[actionId]();
+            } else {
+                console.warn('Unknown action:', actionId);
+            }
+        }
+        
+        async function loadDashboardData() {
+            console.log('📊 Loading dashboard data...');
+            
+            try {
+                // Load statistics
+                await loadStatistics();
+                
+                // Load recent activity
+                loadRecentActivity();
+                
+                // Load charts
+                loadCharts();
+                
+                // Load notifications count
+                loadNotificationsCount();
+                
+                console.log('✅ Dashboard data loaded');
+                
+            } catch (error) {
+                console.error('❌ Error loading dashboard data:', error);
+            }
+        }
+        
+        async function loadStatistics() {
+            console.log('📈 Loading statistics...');
+            
+            try {
+                // Simulate loading statistics
+                document.getElementById('statTotalUsers').textContent = '24';
+                document.getElementById('statTotalEmployees').textContent = '8';
+                document.getElementById('statTotalIncome').textContent = '$15,420';
+                document.getElementById('statTotalExpenses').textContent = '$9,870';
+                
+                // Update counts in sidebar
+                document.getElementById('usersCount').textContent = '24';
+                document.getElementById('employeesCount').textContent = '8';
+                document.getElementById('incomesCount').textContent = '142';
+                document.getElementById('expensesCount').textContent = '89';
+                
+                console.log('✅ Statistics loaded');
+                
+            } catch (error) {
+                console.error('❌ Error loading statistics:', error);
+            }
+        }
+        
+        function loadRecentActivity() {
+            console.log('📝 Loading recent activity...');
+            
+            // Simulate loading data
+            setTimeout(() => {
+                // Recent users table
+                const usersTable = document.getElementById('recentUsersTable');
+                if (usersTable) {
+                    usersTable.innerHTML = `
+                        <tr>
+                            <td>John Doe</td>
+                            <td>john@example.com</td>
+                            <td>2024-01-15</td>
+                            <td><span class="status active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Jane Smith</td>
+                            <td>jane@example.com</td>
+                            <td>2024-01-14</td>
+                            <td><span class="status active">Active</span></td>
+                        </tr>
+                    `;
+                }
+                
+                console.log('✅ Recent activity loaded');
+            }, 1000);
+        }
+        
+        function loadCharts() {
+            console.log('📊 Loading charts...');
+            
+            // Initialize charts after a short delay
+            setTimeout(() => {
+                try {
+                    // Income vs Expenses Chart
+                    const incomeExpensesCtx = document.getElementById('incomeExpensesChart');
+                    if (incomeExpensesCtx) {
+                        new Chart(incomeExpensesCtx.getContext('2d'), {
+                            type: 'line',
+                            data: {
+                                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                                datasets: [
+                                    {
+                                        label: 'Income',
+                                        data: [12000, 19000, 15000, 25000, 22000, 30000],
+                                        borderColor: 'rgb(75, 192, 192)',
+                                        backgroundColor: 'rgba(75, 192, 192, 0.2)'
+                                    },
+                                    {
+                                        label: 'Expenses',
+                                        data: [8000, 12000, 10000, 18000, 15000, 22000],
+                                        borderColor: 'rgb(255, 99, 132)',
+                                        backgroundColor: 'rgba(255, 99, 132, 0.2)'
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false
+                            }
+                        });
+                    }
+                    
+                    console.log('✅ Charts loaded');
+                    
+                } catch (error) {
+                    console.error('❌ Error loading charts:', error);
+                }
+            }, 1500);
+        }
+        
+        function loadNotificationsCount() {
+            console.log('🔔 Loading notifications count...');
+            
+            // Simulate notifications count
+            const count = 3;
+            document.getElementById('notificationCount').textContent = count;
+            document.getElementById('dashboardNotificationCount').textContent = count;
+        }
+        
+        function loadTabData(tabId) {
+            console.log('📁 Loading tab data for:', tabId);
+            
+            // Simulate loading tab-specific data
+            setTimeout(() => {
+                if (tabId === 'recent-incomes') {
+                    const table = document.getElementById('recentIncomesTable');
+                    if (table) {
+                        table.innerHTML = `
+                            <tr>
+                                <td>John Doe</td>
+                                <td>$1,200</td>
+                                <td>Salary</td>
+                                <td>2024-01-15</td>
+                            </tr>
+                            <tr>
+                                <td>Jane Smith</td>
+                                <td>$800</td>
+                                <td>Freelance</td>
+                                <td>2024-01-14</td>
+                            </tr>
+                        `;
+                    }
+                } else if (tabId === 'recent-expenses') {
+                    const table = document.getElementById('recentExpensesTable');
+                    if (table) {
+                        table.innerHTML = `
+                            <tr>
+                                <td>John Doe</td>
+                                <td>$200</td>
+                                <td>Groceries</td>
+                                <td>2024-01-15</td>
+                            </tr>
+                            <tr>
+                                <td>Jane Smith</td>
+                                <td>$150</td>
+                                <td>Utilities</td>
+                                <td>2024-01-14</td>
+                            </tr>
+                        `;
+                    }
+                }
+            }, 500);
+        }
+        
+        function showError(message) {
+            console.error('❌ Error:', message);
+            // Could show a toast or alert here
+        }
+        
+        // Start initialization when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📄 Dashboard DOM loaded');
+            initializeDashboard();
+        });
+        
+        // Global function for insights refresh button
+        window.refreshInsights = function() {
+            console.log('💡 Refreshing insights...');
+            alert('Insights refreshed!');
+        };
+        
+        // Make refreshInsightsBtn work
+        const refreshInsightsBtn = document.getElementById('refreshInsightsBtn');
+        if (refreshInsightsBtn) {
+            refreshInsightsBtn.addEventListener('click', window.refreshInsights);
+        }
+        
+    </script>
 </body>
 </html>
