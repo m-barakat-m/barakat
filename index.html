@@ -78,118 +78,220 @@
     <script src="auth.js"></script>
     
     <script>
-        // Wait for authSystem to initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if authSystem is ready
-            const checkAuthSystem = setInterval(() => {
-                if (window.authSystem && window.authSystem.auth) {
-                    clearInterval(checkAuthSystem);
-                    initializeLogin();
-                }
-            }, 100);
-            
-            // Timeout after 5 seconds
-            setTimeout(() => {
-                clearInterval(checkAuthSystem);
-                if (!window.authSystem) {
-                    console.error('AuthSystem failed to load');
-                    showError('Authentication system failed to load. Please refresh.');
-                }
-            }, 5000);
-        });
+        console.log('📱 Login page loaded');
         
-        function initializeLogin() {
-            const auth = window.authSystem.auth;
-            const db = window.authSystem.db;
+        // Initialize variables
+        let auth, db;
+        let isRedirecting = false;
+        
+        // Initialize Firebase when authSystem is ready
+        function initializeFirebase() {
+            console.log('🔄 Initializing Firebase...');
             
-            // Check for existing session
+            // Try to get auth from authSystem first
+            if (window.authSystem && window.authSystem.getAuth) {
+                auth = window.authSystem.getAuth();
+                db = window.authSystem.getDB();
+                console.log('✅ Got auth from authSystem');
+            }
+            
+            // If authSystem not ready, initialize directly
+            if (!auth && window.firebaseConfig) {
+                console.log('⚡ Initializing Firebase directly...');
+                
+                // Check if Firebase already initialized
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(window.firebaseConfig);
+                }
+                
+                auth = firebase.auth();
+                db = firebase.firestore();
+            }
+            
+            if (auth && db) {
+                console.log('✅ Firebase initialized successfully');
+                setupAuthListener();
+            } else {
+                console.error('❌ Failed to initialize Firebase');
+                setTimeout(initializeFirebase, 500);
+            }
+        }
+        
+        function setupAuthListener() {
+            console.log('👂 Setting up auth listener...');
+            
             auth.onAuthStateChanged(async (user) => {
+                console.log('🔄 Auth state changed. User:', user ? 'Logged in' : 'Logged out');
+                
                 if (user) {
+                    console.log('👤 User details:', {
+                        uid: user.uid,
+                        email: user.email,
+                        emailVerified: user.emailVerified
+                    });
+                    
+                    // Prevent multiple redirects
+                    if (isRedirecting) {
+                        console.log('⏳ Already redirecting, skipping...');
+                        return;
+                    }
+                    
+                    // Check if we're already on dashboard
+                    if (window.location.pathname.includes('dashboard.html')) {
+                        console.log('📍 Already on dashboard, staying put');
+                        return;
+                    }
+                    
                     try {
-                        // Check if user is an active employee
+                        // Check employee status
                         const employeeDoc = await db.collection('employees').doc(user.uid).get();
                         
                         if (employeeDoc.exists) {
                             const employeeData = employeeDoc.data();
+                            console.log('📋 Employee data:', {
+                                status: employeeData.status,
+                                role: employeeData.role,
+                                name: employeeData.name
+                            });
                             
-                            // ✅ ALLOW ALL ACTIVE EMPLOYEES
                             if (employeeData.status === 'active') {
-                                window.location.href = 'dashboard.html';
+                                console.log('✅ Active employee, redirecting to dashboard...');
+                                isRedirecting = true;
+                                
+                                // Add small delay to ensure everything is ready
+                                setTimeout(() => {
+                                    window.location.href = 'dashboard.html';
+                                }, 100);
                             } else {
+                                console.log('❌ Inactive account, logging out...');
                                 await auth.signOut();
-                                showError('Your account is inactive. Contact administrator.');
                             }
                         } else {
+                            console.log('❌ Employee not found in database, logging out...');
                             await auth.signOut();
-                            showError('User not found in system. Contact administrator.');
                         }
                     } catch (error) {
-                        console.error('Session check error:', error);
-                        await auth.signOut();
+                        console.error('❌ Error checking employee:', error);
                     }
+                } else {
+                    console.log('👤 No user logged in');
+                    isRedirecting = false;
                 }
             });
-
-            // Handle login form submission
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value;
-                const errorMessage = document.getElementById('errorMessage');
-                const loginBtn = document.querySelector('.login-btn');
-                
-                // Validate
-                if (!email || !password) {
-                    showError('Please enter email and password.');
-                    return;
-                }
-                
-                // Email validation
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    showError('Please enter a valid email address.');
-                    return;
-                }
-                
-                // Password validation
-                if (password.length < 6) {
-                    showError('Password must be at least 6 characters.');
-                    return;
-                }
-                
-                // Loading state
-                const originalText = loginBtn.innerHTML;
-                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-                loginBtn.disabled = true;
-                errorMessage.textContent = '';
-                
-                try {
-                    // Use authSystem for authentication
-                    const result = await window.authSystem.login(email, password);
-                    
-                    if (result.success) {
-                        // Success - redirect handled by auth state listener
-                        console.log('Login successful for:', email);
-                    } else {
-                        showError(result.error);
-                        document.getElementById('password').value = '';
-                    }
-                    
-                } catch (error) {
-                    console.error('Login error:', error);
-                    showError('An unexpected error occurred. Please try again.');
-                    document.getElementById('password').value = '';
-                    
-                } finally {
-                    loginBtn.innerHTML = originalText;
-                    loginBtn.disabled = false;
-                }
-            });
-
-            // Focus on email field
-            document.getElementById('email').focus();
         }
+        
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const loginBtn = document.querySelector('.login-btn');
+            
+            console.log('🔐 Login attempt for:', email);
+            
+            // Validate
+            if (!email || !password) {
+                showError('Please enter email and password.');
+                return;
+            }
+            
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showError('Please enter a valid email address.');
+                return;
+            }
+            
+            // Password validation
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters.');
+                return;
+            }
+            
+            // Loading state
+            const originalText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            loginBtn.disabled = true;
+            errorMessage.textContent = '';
+            
+            try {
+                // Try to use authSystem first
+                let result;
+                if (window.authSystem && window.authSystem.login) {
+                    console.log('Using authSystem for login');
+                    result = await window.authSystem.login(email, password);
+                } else {
+                    console.log('Using direct Firebase auth');
+                    // Fallback to direct Firebase auth
+                    if (!auth) {
+                        throw new Error('Authentication system not ready');
+                    }
+                    
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    
+                    // Verify employee
+                    const employeeDoc = await db.collection('employees').doc(user.uid).get();
+                    
+                    if (!employeeDoc.exists) {
+                        await auth.signOut();
+                        throw new Error('User not found in system');
+                    }
+                    
+                    const employeeData = employeeDoc.data();
+                    
+                    if (employeeData.status !== 'active') {
+                        await auth.signOut();
+                        throw new Error('Account is inactive');
+                    }
+                    
+                    result = { success: true };
+                }
+                
+                if (result.success) {
+                    console.log('✅ Login successful for:', email);
+                    // Redirect will happen via auth state listener
+                } else {
+                    console.log('❌ Login failed:', result.error);
+                    showError(result.error);
+                    document.getElementById('password').value = '';
+                }
+                
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                
+                let errorMsg = 'Login failed. ';
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMsg = 'Invalid email or password.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMsg = 'Account disabled.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMsg = 'Invalid email address.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMsg = 'Too many attempts. Try later.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMsg = 'Network error. Check connection.';
+                        break;
+                    default:
+                        errorMsg += error.message || 'Please try again.';
+                }
+                
+                showError(errorMsg);
+                document.getElementById('password').value = '';
+                
+            } finally {
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+            }
+        });
         
         function showError(message) {
             const errorElement = document.getElementById('errorMessage');
@@ -201,6 +303,15 @@
                 errorElement.style.display = 'none';
             }, 5000);
         }
+        
+        // Start initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📄 DOM Content Loaded');
+            setTimeout(initializeFirebase, 300);
+            
+            // Focus on email field
+            document.getElementById('email').focus();
+        });
     </script>
 </body>
 </html>
