@@ -78,137 +78,119 @@
     <script src="auth.js"></script>
     
     <script>
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // Check for existing session
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                try {
-                    // Check if user is an active employee
-                    const employeeDoc = await db.collection('employees').doc(user.uid).get();
-                    
-                    if (employeeDoc.exists) {
-                        const employeeData = employeeDoc.data();
+        // Wait for authSystem to initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if authSystem is ready
+            const checkAuthSystem = setInterval(() => {
+                if (window.authSystem && window.authSystem.auth) {
+                    clearInterval(checkAuthSystem);
+                    initializeLogin();
+                }
+            }, 100);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkAuthSystem);
+                if (!window.authSystem) {
+                    console.error('AuthSystem failed to load');
+                    showError('Authentication system failed to load. Please refresh.');
+                }
+            }, 5000);
+        });
+        
+        function initializeLogin() {
+            const auth = window.authSystem.auth;
+            const db = window.authSystem.db;
+            
+            // Check for existing session
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    try {
+                        // Check if user is an active employee
+                        const employeeDoc = await db.collection('employees').doc(user.uid).get();
                         
-                        // ✅ ALLOW ALL ACTIVE EMPLOYEES (NOT JUST ADMINS)
-                        if (employeeData.status === 'active') {
-                            window.location.href = 'dashboard.html';
+                        if (employeeDoc.exists) {
+                            const employeeData = employeeDoc.data();
+                            
+                            // ✅ ALLOW ALL ACTIVE EMPLOYEES
+                            if (employeeData.status === 'active') {
+                                window.location.href = 'dashboard.html';
+                            } else {
+                                await auth.signOut();
+                                showError('Your account is inactive. Contact administrator.');
+                            }
                         } else {
                             await auth.signOut();
-                            showError('Your account is inactive. Contact administrator.');
+                            showError('User not found in system. Contact administrator.');
                         }
-                    } else {
+                    } catch (error) {
+                        console.error('Session check error:', error);
                         await auth.signOut();
-                        showError('User not found in system. Contact administrator.');
                     }
-                } catch (error) {
-                    console.error('Session check error:', error);
-                    await auth.signOut();
                 }
-            }
-        });
+            });
 
-        // Handle login using authSystem
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const loginBtn = document.querySelector('.login-btn');
-            
-            // Validate
-            if (!email || !password) {
-                showError('Please enter email and password.');
-                return;
-            }
-            
-            // Loading state
-            const originalText = loginBtn.innerHTML;
-            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-            loginBtn.disabled = true;
-            errorMessage.textContent = '';
-            
-            try {
-                // Use authSystem for authentication
-                if (window.authSystem) {
+            // Handle login form submission
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const errorMessage = document.getElementById('errorMessage');
+                const loginBtn = document.querySelector('.login-btn');
+                
+                // Validate
+                if (!email || !password) {
+                    showError('Please enter email and password.');
+                    return;
+                }
+                
+                // Email validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showError('Please enter a valid email address.');
+                    return;
+                }
+                
+                // Password validation
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters.');
+                    return;
+                }
+                
+                // Loading state
+                const originalText = loginBtn.innerHTML;
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+                loginBtn.disabled = true;
+                errorMessage.textContent = '';
+                
+                try {
+                    // Use authSystem for authentication
                     const result = await window.authSystem.login(email, password);
                     
                     if (result.success) {
-                        // Redirect to dashboard
-                        window.location.href = 'dashboard.html';
+                        // Success - redirect handled by auth state listener
+                        console.log('Login successful for:', email);
                     } else {
                         showError(result.error);
                         document.getElementById('password').value = '';
                     }
-                } else {
-                    // Fallback to direct Firebase authentication
-                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                    const userId = userCredential.user.uid;
                     
-                    // Verify employee exists and is active
-                    const employeeDoc = await db.collection('employees').doc(userId).get();
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showError('An unexpected error occurred. Please try again.');
+                    document.getElementById('password').value = '';
                     
-                    if (!employeeDoc.exists) {
-                        await auth.signOut();
-                        showError('Access denied. Not registered in system.');
-                        return;
-                    }
-                    
-                    const employeeData = employeeDoc.data();
-                    
-                    // ✅ ALLOW ALL ACTIVE EMPLOYEES (NOT JUST ADMINS)
-                    if (employeeData.status !== 'active') {
-                        await auth.signOut();
-                        showError('Account is inactive. Contact administrator.');
-                        return;
-                    }
-                    
-                    // Update last login
-                    await db.collection('employees').doc(userId).update({
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    // Redirect to dashboard
-                    window.location.href = 'dashboard.html';
+                } finally {
+                    loginBtn.innerHTML = originalText;
+                    loginBtn.disabled = false;
                 }
-                
-            } catch (error) {
-                let errorMsg = 'Login failed. ';
-                
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                        errorMsg = 'Invalid email or password.';
-                        break;
-                    case 'auth/user-disabled':
-                        errorMsg = 'Account disabled. Contact administrator.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMsg = 'Invalid email address.';
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMsg = 'Too many attempts. Try again later.';
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMsg = 'Network error. Check your connection.';
-                        break;
-                    default:
-                        errorMsg += 'Please try again.';
-                }
-                
-                showError(errorMsg);
-                document.getElementById('password').value = '';
-                
-            } finally {
-                loginBtn.innerHTML = originalText;
-                loginBtn.disabled = false;
-            }
-        });
+            });
 
+            // Focus on email field
+            document.getElementById('email').focus();
+        }
+        
         function showError(message) {
             const errorElement = document.getElementById('errorMessage');
             errorElement.textContent = message;
@@ -219,11 +201,6 @@
                 errorElement.style.display = 'none';
             }, 5000);
         }
-        
-        // Focus on email field when page loads
-        window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('email').focus();
-        });
     </script>
 </body>
 </html>
